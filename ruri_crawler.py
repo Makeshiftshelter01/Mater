@@ -15,10 +15,12 @@ import time
 class WebCrawler:
     # 링크정보를 꼬리만 가지고 있을 때, 모든 정보를 합침.
     def adjusthtml_pb_tail(self, part_html, head=""):
-        full_html = ""
-        if part_html.get('href').find(r'\.') == 0:
-            full_html = head + str(part_html.get('href'))
-        full_html = str(part_html.get('href'))
+        
+        #full_html = "http://www.82cook.com/entiz/"
+        if 'http' not in part_html.get('href'):
+            full_html = head + part_html.get('href')
+        else:
+            full_html = part_html.get('href')
         return full_html
     
     # 페이지를 설정할 수 있게 옵션 선택
@@ -28,7 +30,7 @@ class WebCrawler:
 
         # 접속할 주소 및 기타 접속 정보
         
-        url = 'http://bbs.ruliweb.com/community/board/300148/list' #루리웹
+        url = 'http://www.82cook.com/entiz/enti.php?bn=15' #루리웹
         # url = 'http://www.ilbe.com/index.php?mid=politics' #일베
         headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
         print('%s 에 접속합니다. : ' % url)
@@ -61,7 +63,7 @@ class WebCrawler:
             ## 링크
             for part_html in root.cssselect(clink):
                 #특이사항 : 꼬리만 추출되는 경우 감안
-                ruri_html_list.append(self.adjusthtml_pb_tail(part_html))
+                ruri_html_list.append(self.adjusthtml_pb_tail(part_html, 'http://www.82cook.com/entiz/'))
                 # ruri_html_list.append(part_html.get('href'))
 
             ## 제목
@@ -71,7 +73,8 @@ class WebCrawler:
             ## 추천수
             # 특이사항 : cssselect를 이용할 때 :not(.클래스이름)을 사용하여 notice class 제거.
             for part_html in root.cssselect(cthumb):
-                ruri_thumbup_list.append(part_html.text_content())
+        
+                ruri_thumbup_list.append('None')
 
         print('총 수집한 링크 수 : ', len(ruri_html_list))
 

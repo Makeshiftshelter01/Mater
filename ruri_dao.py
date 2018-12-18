@@ -10,7 +10,7 @@ class CrwalingDAO:
         innerurl = ""
         host = "" # linux구분
         if platform.system() != "Linux":
-            innerurl = './myProject_A_python/myinfo.json'
+            innerurl = 'D:/ksm503/mms01/Mater/myinfo.json'
             host = 'host'
         else:
             innerurl = '/home/pythonuser/project/myinfo.json'
@@ -27,7 +27,7 @@ class CrwalingDAO:
     def insertone(self, cr):
         innerurl = ""
         if platform.system() != "Linux":
-            innerurl = './myProject_A_python/mysave.json'
+            innerurl = 'D:/ksm503/mms01/Mater/mysave.json'
         else:
             innerurl = '/home/pythonuser/project/mysave.json'
         conn = self.setdbinfo() #접속값을 받아옴.

@@ -1,9 +1,9 @@
 {
-    "cno" : "tr.table_body:not(.notice) td.id",
-    "clink" : "tr.table_body div.relative a.deco",
-    "ctitle" : "tr.table_body div.relative a.deco",
-    "cthumb" : "tr.table_body:not(.notice) td.recomd",
-    "ccontent" : "div.board_main_view div.view_content",
-    "clinks" : "div.board_main_view div.view_content p a",
-    "creplies" : "div.comment_view.normal table.comment_table tr.comment_element > td.comment > div.text_wrapper > span.text"
+    "cno" : "tr td.numbers",
+    "clink" : "tr td.numbers a",
+    "ctitle" : "tr:not(.notice) td.title a",
+    "cthumb" : "None",
+    "ccontent" : "div#articleBody",
+    "clinks" : "div#articleBody a",
+    "creplies" : "ul.reples li p"
 }

@@ -1,0 +1,7 @@
+{
+    "host" : "54.180.142.114",
+    "lhost" : "172.31.28.22",
+    "port" : 9046,
+    "database" : "mongodb",
+    "collection" : "ruriweb1"
+}

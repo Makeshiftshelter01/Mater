@@ -30,7 +30,7 @@ class WebCrawler:
 
         # 접속할 주소 및 기타 접속 정보
         
-        url = 'http://www.82cook.com/entiz/enti.php?bn=15' #루리웹
+        url = 'http://www.82cook.com/entiz/enti.php?bn=15' #82cook
         # url = 'http://www.ilbe.com/index.php?mid=politics' #일베
         headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
         print('%s 에 접속합니다. : ' % url)
@@ -72,9 +72,19 @@ class WebCrawler:
 
             ## 추천수
             # 특이사항 : cssselect를 이용할 때 :not(.클래스이름)을 사용하여 notice class 제거.
-            for part_html in root.cssselect(cthumb):
-        
-                ruri_thumbup_list.append('None')
+            
+            # *** 82cook : 이미 없는 항목이기 때문에 반복문을 쓸 수가 없다... (반복을 하지 않음).
+            #  그렇기 때문에 None을 억지로 넣어줘도 반복을 하지 않아서 index out of range가 뜸
+            # 
+            # 일단 응급처치로 title_list의 길이만큼 추천수 리스트에 'None'을 넣었음
+
+            for thumb in range(0, len(ruri_title_list)):
+                ruri_thumbup_list.append('none')
+
+
+            # ----- 오리지널 코드
+            # for part_html in root.cssselect(cthumb):
+            #     ruri_thumbup_list.append(part_html.text_content())
 
         print('총 수집한 링크 수 : ', len(ruri_html_list))
 

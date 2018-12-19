@@ -1,9 +1,0 @@
-{
-    "cno" : "tr:not(.noticeList) td.numbers a.photolink",
-    "clink" : "tr:not(.noticeList) td.numbers a",
-    "ctitle" : "tr:not(.noticeList) td.title a",
-    "cthumb" : "td.thumb",
-    "ccontent" : "div#articleBody",
-    "clinks" : "div#articleBody a",
-    "creplies" : "ul.reples li p"
-}

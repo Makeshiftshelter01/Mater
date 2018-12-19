@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-# 김성목
+
 class ConnectTo:
     def __init__(self, host, port, database, collection):
         self.__host = host

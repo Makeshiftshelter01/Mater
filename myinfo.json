@@ -1,7 +1,0 @@
-{
-    "host" : "13.209.74.74",
-    "lhost" : "172.31.27.154",
-    "port" : 8854,
-    "database" : "project",
-    "collection" : "cook2"
-}

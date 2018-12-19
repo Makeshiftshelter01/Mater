@@ -1,7 +1,7 @@
 {
-    "host" : "54.180.142.114",
-    "lhost" : "172.31.28.22",
-    "port" : 9046,
-    "database" : "mongodb",
-    "collection" : "ruriweb1"
+    "host" : "13.209.74.74",
+    "lhost" : "172.31.27.154",
+    "port" : 8854,
+    "database" : "project",
+    "collection" : "cook2"
 }

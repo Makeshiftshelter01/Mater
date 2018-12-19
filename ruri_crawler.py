@@ -1,4 +1,4 @@
-# 접속 및 파싱 #  pull request 테스트!!!!!!!!
+# 접속 및 파싱 #  pull request 테스트!!!!!!!!22222
 import requests
 import lxml.html
 import cssselect
@@ -30,7 +30,7 @@ class WebCrawler:
 
         # 접속할 주소 및 기타 접속 정보
         
-        url = 'http://www.82cook.com/entiz/enti.php?bn=15' #82cook
+        url = 'http://www.82cook.com/entiz/enti.php?bn=15' #루리웹
         # url = 'http://www.ilbe.com/index.php?mid=politics' #일베
         headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
         print('%s 에 접속합니다. : ' % url)
@@ -41,6 +41,8 @@ class WebCrawler:
         ruri_title_list = [] #제목
         ruri_html_list = [] #제목링크
         ruri_thumbup_list = [] #추천
+        ### 값이 빈 upper page 리스트의 확인을 위해 모든 리스트를 하나의 list로 묶음
+        ruri_upper_page_list = [ruri_no_list, ruri_title_list, ruri_html_list, ruri_thumbup_list] 
 
         ## lower page
         ruri_contents_part_list = [] #게시글, 게시글 내 링크, 댓글
@@ -58,41 +60,42 @@ class WebCrawler:
             ## 번호
             # 특이사항 : cssselect를 이용할 때 :not(.클래스이름)을 사용하여 notice class 제거.
             for part_html in root.cssselect(cno):
-                ruri_no_list.append(part_html.text_content())
+                ruri_upper_page_list[0].append(part_html.text_content())
 
             ## 링크
             for part_html in root.cssselect(clink):
                 #특이사항 : 꼬리만 추출되는 경우 감안
-                ruri_html_list.append(self.adjusthtml_pb_tail(part_html, 'http://www.82cook.com/entiz/'))
+                ruri_upper_page_list[1].append(self.adjusthtml_pb_tail(part_html, 'http://www.82cook.com/entiz/'))
                 # ruri_html_list.append(part_html.get('href'))
 
             ## 제목
             for part_html in root.cssselect(ctitle):
-                ruri_title_list.append(part_html.text_content())
+                ruri_upper_page_list[2].append(part_html.text_content())
 
             ## 추천수
             # 특이사항 : cssselect를 이용할 때 :not(.클래스이름)을 사용하여 notice class 제거.
-            
-            # *** 82cook : 이미 없는 항목이기 때문에 반복문을 쓸 수가 없다... (반복을 하지 않음).
-            #  그렇기 때문에 None을 억지로 넣어줘도 반복을 하지 않아서 index out of range가 뜸
-            # 
-            # 일단 응급처치로 title_list의 길이만큼 추천수 리스트에 'None'을 넣었음
+            for part_html in root.cssselect(cthumb):
+                ruri_upper_page_list[3].append(part_html.text_content())
 
-            for thumb in range(0, len(ruri_title_list)):
-                ruri_thumbup_list.append('none')
+        #빈 upper page 리스트 체크 - 모든 리스트를 검사해서 빈 리스트가 있으면 이를 더미 값으로 채움.
+        count = 0
+        chk = sorted(ruri_upper_page_list) #빈 리스트가 모두 리스트의 앞 쪽으로 올 수 있게 정렬함 => 맨 뒤는 무조건 숫자가 있다는 뜻
+        # 빈 리스트의 존재 확인 후 
+        if [] in ruri_upper_page_list:
+            # 있다면 리스트를 하나씩 검사해서
+            for i in ruri_upper_page_list:
+                if i == []:
+                    #다른 리스트가 가진 수량만큼 'None'값을 넣어줌.
+                    ruri_upper_page_list[count] = ['None']*len(chk[-1])
+                count += 1
 
-
-            # ----- 오리지널 코드
-            # for part_html in root.cssselect(cthumb):
-            #     ruri_thumbup_list.append(part_html.text_content())
-
-        print('총 수집한 링크 수 : ', len(ruri_html_list))
+        print('총 수집한 링크 수 : ', len(ruri_upper_page_list[1]))
 
         # 2. lower page
         i = 1 #현재 진행사항을 파악하기 위한 변수 설정
         # 수집한 링크로 이동하여 게시글, 게시글 내 링크, 댓글 정보를 저장.
-        for innerlink in ruri_html_list:
-            print('크롤링 진행사항', i, ' / ', len(ruri_html_list))
+        for innerlink in ruri_upper_page_list[1]:
+            print('크롤링 진행사항', i, ' / ', len(ruri_upper_page_list[1]))
             inner_res = requests.get(innerlink, headers=headers)
             inner_html = inner_res.text
             inner_root = lxml.html.fromstring(inner_html)
@@ -132,6 +135,4 @@ class WebCrawler:
 
         ### 크롤링 시간측정 종료 ###
         print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time,2)))
-        return (ruri_no_list, ruri_html_list, ruri_title_list, ruri_thumbup_list, ruri_contents_part_list)
-    
-
+        return (ruri_upper_page_list[0], ruri_upper_page_list[1], ruri_upper_page_list[2], ruri_upper_page_list[3], ruri_contents_part_list)

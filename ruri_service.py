@@ -10,7 +10,7 @@ class Crawling:
         ## 크롤링에 쓸 css태크 호출
         innerurl = ""
         if platform.system() != "Linux":
-            innerurl = 'Z:/python projects/mss01/Mater/mycrawlingCSS.json'
+            innerurl = 'D:/ksm503/mss01/Mater/mycrawlingCSS.json'
         else:
             innerurl = '/home/pythonuser/project/mycrawlingCSS.json'
         with open(innerurl) as f:

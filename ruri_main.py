@@ -19,7 +19,7 @@ start_time = time.time()
 # 크롤링
 cr = Crawling() #크롤링
 cd = CrwalingDAO() #DB
-cd.insertone(cr.crawling('ruri', 2)) #ruriweb, 2page까지
+cd.insertone(cr.crawling('ruriweb', 2)) #ruriweb, 2page까지
 
 # 프로그램 종료 측정 및 결과 출력
 print('It takes %s seconds completing the crawling and the uploading' % (round(time.time() - start_time,2)))

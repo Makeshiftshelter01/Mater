@@ -18,7 +18,7 @@ class CrwalingDAO:
         # ini파일을 이용해 접속 데이터 읽기
         config = Config()
         data = config.read_info_in_config('mongoDB')
-        cnct = ConnectTo(data[host],data['port'],data['database'],data['collection']) #인스턴스화
+        cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection']) #인스턴스화
         cnct.MongoDB() #mongoDB 접속, 현재는 mongoDB만 가능하지만 추후 다른 DB도 선택할 수 있도록 변경
         return cnct
 

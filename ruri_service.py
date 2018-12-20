@@ -29,9 +29,3 @@ class Crawling:
         wc = WebCrawler()
         result = wc.crawlingposts(lastpage, ctargetdata)
         return result
-
-#test
-c = Crawling()
-# print(c.setcsstags('ruriweb'))
-print(c.crawling('ruriweb', 2))
-

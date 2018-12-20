@@ -115,7 +115,7 @@ class WebCrawler:
             ruri_replies_list = []
             ruri_lower_thumbup_list = []
             ruri_lower_thumbdown_list = []
-
+           
             # 게시글
             for part_html in inner_root.cssselect(keys[8]):
                 #게시글은 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
@@ -141,13 +141,19 @@ class WebCrawler:
             for part_html in root.cssselect(keys[12]):
                 ruri_lower_thumbdown_list.append(part_html.text_content())
 
+            # 글 안의 날짜
+            for part_html in inner_root.cssselect(keys[13]):
+                #날짜는 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
+                in_date = part_html.text_content()
+
             # 각 게시글의 내용, 링크, 댓글을 저장할 dictionary type 생성
             ruri_content_dict = {
                 'content' : main_content,
                 'link' : ruri_innerlink_list,
                 'reply' : ruri_replies_list,
                 'thumbup' : ruri_lower_thumbup_list,
-                'thumbdown' : ruri_lower_thumbdown_list
+                'thumbdown' : ruri_lower_thumbdown_list,
+                'date' :  in_date
             }
 
             #list에 모든 dictionary type 저장.

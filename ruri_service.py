@@ -33,5 +33,5 @@ class Crawling:
 #test
 c = Crawling()
 # print(c.setcsstags('ruriweb'))
-print(c.crawling('ruriweb', 2))
+print(c.crawling('cook', 2))
 

@@ -8,12 +8,11 @@ import time
 import re
 from selenium.webdriver.firefox.options import Options
 
-import 
 
 start_time = time.time()
 
 
-def invencrawl(sp, ep):
+def crawlingposts(self, lastpage, cvalues)::
 
     options = Options()
     options.set_headless(True)  # newer webdriver versions

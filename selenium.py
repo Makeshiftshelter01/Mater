@@ -6,160 +6,160 @@ import time as t
 from time import sleep
 import time
 import re
-from selenium.webdriver.firefox.options import Options
-
+import platform
 
 start_time = time.time()
 
 
-def crawlingposts(self, lastpage, cvalues)::
+def selenium_crawler(self, lastpage, cvalues):
 
-    options = Options()
-    options.set_headless(True)  # newer webdriver versions
-    chrome = webdriver.Firefox(options=options, executable_path=r'/home/tester/geckodriver')
-    print("Headless Firefox Initialized")
+    host = "" # linux구분
+    if platform.system() != "Linux":
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        chrome = webdriver.Chrome(executable_path=r'C:/Program Files(x86)/Google/Chrome/Application/chromedriver.exe', options=options)
 
+    else:
+        options = webdriver.FirefoxOptions()
+        options.add_argument('headless')
+        chrome = webdriver.Firefox(options=options, executable_path=r'/home/tester/geckodriver')
+    
+    ### 크롤링 시간측정 시작 ####
+    start_time = time.time()
+    keys = list(cvalues.values())
 
-    numbers = []
-    tit_links = []
-    titles = []
-    dates = []
-    likes = []
-    hates = []
-    content = []
+    # 접속할 주소 및 기타 접속 정보
+    url = keys[0]
+    
+    headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
+    print('%s 에 접속합니다. : ' % url)
 
-    # 몽고에 넣을 사전
-    all = {}
+    # 0. 매 페이지의 정보를 저장할 리스트 준비
+    ## upper page
+    ruri_no_list = [] #글번호
+    ruri_title_list = [] #제목
+    ruri_html_list = [] #제목링크
+    ruri_thumbup_list = [] #추천
+    ruri_thumbdown_list = [] #비추천
+    ruri_dates_list = [] #날짜
+    ### 값이 빈 upper page 리스트의 확인을 위해 모든 리스트를 하나의 list로 묶음
+    ruri_upper_page_list = [ruri_no_list, ruri_title_list, ruri_html_list, ruri_thumbup_list, ruri_thumbdown_list, ruri_dates_list] 
 
+    ## lower page
+    ruri_contents_part_list = [] #게시글, 게시글 내 링크, 댓글
 
-    for i in range(sp,ep):
+    # 1. upper page 
+    # 모든 페이지에 접속하여 글번호, 제목, 제목링크, 추천 정보를 저장.
+    for i in range(1, int(lastpage)):
+        params = {'page': i}
+        res = requests.get(url, headers=headers, params=params)
+        html = res.text
+        root = lxml.html.fromstring(html)
 
-        # 페이지 넘버
-        url = 'http://www.inven.co.kr/board/wow/762?sort=PID&iskin=webzine&p=' + str(i)
+        sleep(0.5)
 
-        chrome.get(url)
-        sleep(1)
+        ## 번호
+        # 특이사항 : cssselect를 이용할 때 :not(.클래스이름)을 사용하여 notice class 제거.
+        for part_html in root.cssselect(keys[2]):
+            ruri_upper_page_list[0].append(part_html.text_content())
 
-        print('페이지'+str(i)+'접속완료')
+        ## 링크
+        for part_html in root.cssselect(keys[3]):
+            #특이사항 : 꼬리만 추출되는 경우 감안
+            ruri_upper_page_list[1].append(self.adjusthtml_pb_tail(part_html, keys[1]))
+            # ruri_html_list.append(part_html.get('href'))
 
-        print('글번호/링크 모두 긁는 중')
+        ## 제목
+        for part_html in root.cssselect(keys[4]):
+            ruri_upper_page_list[2].append(part_html.text_content())
 
-        # 한 페이지의 글 번호 모두 저장(공지 제외)
-        for no in chrome.find_elements_by_css_selector('tr.ls.tr td.bbsNo'):
-            numbers.append(no.text.strip())
+        ## 추천수
+        # 특이사항 : cssselect를 이용할 때 :not(.클래스이름)을 사용하여 notice class 제거.
+        for part_html in root.cssselect(keys[5]):
+            ruri_upper_page_list[3].append(part_html.text_content())
+        
+        ## 비추수
+        for part_html in root.cssselect(keys[6]):
+            ruri_upper_page_list[4].append(part_html.text_content())
 
-        # 그 페이지의 제목에서 링크 가져오기(공지 제외)
-        for tit_link in chrome.find_elements_by_css_selector('tr.ls.tr td.bbsSubject a'):
-            tit_links.append(tit_link.get_attribute('href'))
+        ## 날짜
+        for part_html in root.cssselect(keys[7]):
+            ruri_upper_page_list[5].append(part_html.text_content())
 
+    #빈 upper page 리스트 체크 - 모든 리스트를 검사해서 빈 리스트가 있으면 이를 더미 값으로 채움.
+    count = 0
+    chk = sorted(ruri_upper_page_list) #빈 리스트가 모두 리스트의 앞 쪽으로 올 수 있게 정렬함 => 맨 뒤는 무조건 숫자가 있다는 뜻
+    # 빈 리스트의 존재 확인 후 
+    if [] in ruri_upper_page_list:
+        # 있다면 리스트를 하나씩 검사해서
+        for i in ruri_upper_page_list:
+            if i == []:
+                #다른 리스트가 가진 수량만큼 'None'값을 넣어줌.
+                ruri_upper_page_list[count] = ['None']*len(chk[-1])
+            count += 1
 
-    # 가져온 글 링크로 접속 후 내용 가져오기
-    for i in range(0, len(numbers)):
-        try:
-            print(numbers[i], '+' , tit_links[i])
+    print('총 수집한 링크 수 : ', len(ruri_upper_page_list[1]))
 
-            newurl = tit_links[i]
+    # 2. lower page
+    i = 1 #현재 진행사항을 파악하기 위한 변수 설정
+    # 수집한 링크로 이동하여 게시글, 게시글 내 링크, 댓글 정보를 저장.
+    for innerlink in ruri_upper_page_list[1]:
+        print('크롤링 진행사항', i, ' / ', len(ruri_upper_page_list[1]))
+        inner_res = requests.get(innerlink, headers=headers)
+        inner_html = inner_res.text
+        inner_root = lxml.html.fromstring(inner_html)
 
-            chrome.get(newurl)
-            print('글 안으로 접속 완료')
-            # 슬립
-            sleep(0.5)
+        #게시물 & 내부링크
+        main_content = ""
+        ruri_innerlink_list = []
+        ruri_replies_list = []
+        ruri_lower_thumbup_list = []
+        ruri_lower_thumbdown_list = []
+        
+        # 게시글
+        for part_html in inner_root.cssselect(keys[8]):
+            #게시글은 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
+            main_content = part_html.text_content()
+        
+        # 링크
+        ## 해결필요 : 유튜브 등의 주소는?
+        for part_html in inner_root.cssselect(keys[9]):
+            # 특이사항 : a태그로 link를 불러왔으나, 그림파일 등 a 태크를 사용하는 경우 blank 저장
+            if part_html.get('href') is None:
+                continue
+            ruri_innerlink_list.append(part_html.get('href')) #내부링크
 
-            # 글 안의 내용 크롤링
-            # 예외처리를 위해 append는 제일 마지막에
+        # 댓글
+        for part_html in inner_root.cssselect(keys[10]):
+            ruri_replies_list.append(part_html.text_content())
 
-            #타이틀 긁기
-            title= chrome.find_element_by_css_selector('div.articleTitle h1')
-            # 날짜
-            date = chrome.find_element_by_css_selector('div.articleDate')
-            # 추천수
-            like = chrome.find_element_by_css_selector('span.reqblue')
-            # 비추천수
-            hate = chrome.find_element_by_css_selector('span.reqred')
+        ## 추천수
+        for part_html in root.cssselect(keys[11]):
+            ruri_lower_thumbup_list.append(part_html.text_content())
+        
+        ## 비추수
+        for part_html in root.cssselect(keys[12]):
+            ruri_lower_thumbdown_list.append(part_html.text_content())
 
-            # --------------다음 3개의 항목은 안에 사전을 만들어서 한번에 넣을 것
-            #글 내용
-            c = chrome.find_element_by_id('powerbbsContent')
-            con = c.text.strip()
-            # 링크 가져오기
-            lk = []
-            for link in chrome.find_elements_by_css_selector('#powerbbsContent a'):
-                lk.append(link.get_attribute('href'))
-            # 댓글
-            comm = []
-            for j in chrome.find_elements_by_css_selector('div.commentList1 ul li.row div div span.cmtContentOne'):
-                comm.append(j.text.strip())
-            print('글 안 내용 모두 긁기 완료' + str(i+1) + '/' + str(len(numbers)))
+        # 글 안의 날짜
+        for part_html in inner_root.cssselect(keys[13]):
+            #날짜는 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
+            in_date = part_html.text_content()
 
-            # 글 내용, 링크, 댓글
-            incontent = {
-                'content' : con,
-                'link' : lk,
-                'reply' : comm
-            }
-            content.append(incontent)
-            titles.append(title.text.strip())
-            dates.append(date.text.strip())
-            likes.append(like.text.strip())
-            hates.append(hate.text.strip())
-            print()
-            if (i+1) % 30 == 0:
-                print("Refresh...............")
-                sleep(30)
-        except:
-            #!!! 문서 수가 많아질수록 간혹 로딩이 안되면서 에러가 뜨는데 예외처리를 하고 넘어가려고 했으나 문제는 남은 문서들도 모두 예외처리가 되어버림
-            # 그렇기에 예외처리에서 크롬을 끄고 다시 로딩하게 하려고 했으나 이번에는 전혀 다른 예외가 뜨면서(except로 안걸러짐) 프로그램 강제 종료
-            print('에러 발생')
-            print('관련 내용은 예외 처리')
+        # 각 게시글의 내용, 링크, 댓글을 저장할 dictionary type 생성
+        ruri_content_dict = {
+            'content' : main_content,
+            'link' : ruri_innerlink_list,
+            'reply' : ruri_replies_list,
+            'thumbup' : ruri_lower_thumbup_list,
+            'thumbdown' : ruri_lower_thumbdown_list,
+            'date' :  in_date
+        }
 
-            titles.append('Error')
-            dates.append('Error')
-            likes.append(0)
-            hates.append(0)
+        #list에 모든 dictionary type 저장.
+        ruri_contents_part_list.append(ruri_content_dict)
+        i += 1
 
-            con = 'Error'
-            lk = []
-            comm = []
-            incontent = {
-                'content': con,
-                'link': lk,
-                'reply': comm
-            }
-            content.append(incontent)
-            print('예외처리 완료')
-
-
-    client = MongoClient('mongodb://13.209.74.74:8854')
-
-    # 데이터베이스 객체 가져오기
-    db = client.project
-
-    # 컬렉션 객체 가져오기
-
-    inven = db.inven_test
-
-
-    print('모든 글 긁기 완료')
-    print('몽고에 저장 중...')
-
-    # 몽고에 저장
-    for q in range(0, len(numbers)):
-        all = {'no': numbers[q],
-               'html' : tit_links[q],
-               'title' : titles[q],
-               'date' : dates[q],
-               'Content' : content[q],
-               'thumb_up' : likes[q],
-               'thumb_down' : hates[q]}
-        inven.insert_one(all)
-    print('몽고 저장 완료')
-
-    chrome.close()
-    client.close()
-
-
-invencrawl(1, 10+1)
-end_time = time.time()
-
-# 걸린 총 시간 표시
-print(end_time - start_time)
+    ### 크롤링 시간측정 종료 ###
+    print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time,2)))
+    return (ruri_upper_page_list[0], ruri_upper_page_list[1], ruri_upper_page_list[2], ruri_upper_page_list[3], ruri_contents_part_list)

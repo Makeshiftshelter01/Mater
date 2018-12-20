@@ -92,11 +92,18 @@ class WebCrawler:
         # 빈 리스트의 존재 확인 후 
         if [] in ruri_upper_page_list:
             # 있다면 리스트를 하나씩 검사해서
-            for i in ruri_upper_page_list:
-                if i == []:
-                    #다른 리스트가 가진 수량만큼 'None'값을 넣어줌.
-                    ruri_upper_page_list[count] = ['None']*len(chk[-1])
-                count += 1
+            # nonecnt = 0
+            # for i in chk:
+            #     if i == []:
+            #         nonecnt = nonecnt + 1
+            for i in range(0, len(ruri_upper_page_list)):
+                if ruri_upper_page_list[i] == []:
+                    ruri_upper_page_list[i] = ['None']*len(chk[-1])
+                    
+                # if i == []:
+                #     #다른 리스트가 가진 수량만큼 'None'값을 넣어줌.
+                #     sorted(ruri_upper_page_list)[count] = ['None']*len(chk[-1])
+                # count += 1
 
         print('총 수집한 링크 수 : ', len(ruri_upper_page_list[1]))
 
@@ -162,4 +169,5 @@ class WebCrawler:
 
         ### 크롤링 시간측정 종료 ###
         print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time,2)))
-        return (ruri_upper_page_list[0], ruri_upper_page_list[1], ruri_upper_page_list[2], ruri_upper_page_list[3], ruri_contents_part_list)
+        return (ruri_upper_page_list[0], ruri_upper_page_list[1], ruri_upper_page_list[2], 
+        ruri_upper_page_list[3], ruri_upper_page_list[4],ruri_upper_page_list[5],ruri_contents_part_list)

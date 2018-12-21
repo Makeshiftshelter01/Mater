@@ -1,8 +1,14 @@
 # 접속 및 파싱
 import requests
 import lxml.html
+# import lxml.etree
 import cssselect
 import collections
+
+# error = lxml.etree.ParseError()
+# msg = error.msg
+# if msg == "Document is empty"
+#     pass
 
 # 데이터 저장
 # from ruri_data import Ruri_Data
@@ -54,7 +60,7 @@ class WebCrawler:
         #################################
         # 1. upper page - 상단 페이지 실행
         # 모든 페이지에 접속하여 글번호, 제목, 제목링크, 추천 정보를 저장.
-        for i in range(1, int(lastpage)):
+        for i in range(1, int(lastpage)+1):
             params = {'page': i}
             res = requests.get(url, headers=headers, params=params)
             html = res.text
@@ -101,7 +107,7 @@ class WebCrawler:
         
         # 수집한 링크로 이동하여 게시글, 게시글 내 링크, 댓글 정보를 저장.
         for innerlink in ruri_upper_page_list[1]:
-            print('크롤링 진행사항', i, ' / ', len(ruri_upper_page_list[1]))
+            print('크롤링 진행사항 :', i, ' / ', len(ruri_upper_page_list[1]))
             inner_res = requests.get(innerlink, headers=headers)
             inner_html = inner_res.text
             inner_root = lxml.html.fromstring(inner_html)
@@ -115,6 +121,7 @@ class WebCrawler:
             # 9. 추천수
             # 10. 비추수
             # 11. 날짜
+            # 12.
             
             for j in range(6, 12):
                 tmplist = list()

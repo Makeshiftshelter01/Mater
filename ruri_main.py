@@ -9,6 +9,7 @@
 #8. 해당 사이트의 정치적 성향을 지정 => 통계적 과정
 
 # import
+
 from ruri_service import Crawling
 from ruri_dao import CrwalingDAO
 import time
@@ -19,7 +20,7 @@ start_time = time.time()
 # 크롤링
 cr = Crawling() #크롤링
 cd = CrwalingDAO() #DB
-cd.insertone(cr.crawling('ilbe', 1000)) #ruriweb, 2page까지
+cd.insertone(cr.crawling('cook', 4)) #ruriweb, 2page까지
 
 # 프로그램 종료 측정 및 결과 출력
 print('It takes %s seconds completing the crawling and the uploading' % (round(time.time() - start_time,2)))

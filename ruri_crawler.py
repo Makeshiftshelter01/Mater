@@ -74,6 +74,8 @@ class WebCrawler:
                         ruri_upper_page_list[j].append(self.adjusthtml_pb_tail(part_html, keyvalues[1]))
                     else:
                         ruri_upper_page_list[j].append(part_html.text_content())
+            print('기본정보 수집중 : 현재페이지 %s & 소요시간 %s' % i, (round(time.time() - start_time,2)))
+        print('It takes %s seconds completing the upper page crawling and the uploading' % (round(time.time() - start_time,2)))
 
         ###############################
         # 1-2. 빈 upper page 리스트 체크

@@ -58,7 +58,7 @@ class Config:
             return cdict[section]
 
 
-c = Config()
-# b = c.read_init_config('ruriweb')
-d = c.read_info_in_config('ruriweb')
-print(d)
+# c = Config()
+# # b = c.read_init_config('ruriweb')
+# d = c.read_info_in_config('ruriweb')
+# print(d)

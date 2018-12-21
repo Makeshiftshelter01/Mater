@@ -45,8 +45,7 @@ class CrwalingDAO:
     def select(self, collection):
         config = Config()
         data = config.get_coll_dict(collection)
-        print(data.keys())
-        print(data)
+       
         host = "" # linux구분
         if platform.system() != "Linux":
             host = 'host'

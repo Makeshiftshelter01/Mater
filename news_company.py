@@ -49,8 +49,8 @@ class News_company:
             news_dict_keys = list(news_dict.keys())
             news_dict_values = list(news_dict.values())                   
             headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
-            naver = 'naver'
-            daum= 'daum'
+            naver = 'news.naver' #
+            daum= 'v.daum' # 그냥 daum으로 쓰면 cafe.daum에서 걸림
             
             for j in range(len(link)): # 리스트 형태 안의 링크의 갯수만큼 반복
                 temp = 'Not News'
@@ -58,25 +58,43 @@ class News_company:
                     if news_dict_values[w] in link[j]:
                         temp = news_dict_keys[w]
                         
-                if (daum in link[j]) or (naver in link[j]): # 뉴스링크(문자열)에 'daum' 혹은 'naver'라는 키워드가 있다면.
+                if (daum in link[j]): # 뉴스링크(문자열)에 'daum' 키워드가 있다면.
                     res = requests.get(link[j], headers=headers) # 그 링크로 접속
                     html = res.text
                     root = lxml.html.fromstring(html)
-                # 특정한 선택자로 가져오려고 했으나 반응형 네이버/다음과는 선택자가 다른 것으로 판명
-                # img의 모든 alt를 가져와서 맞추기
-                    selector = root.cssselect('img')[0]
+                    print('daum 뉴스', link[j])
+                    selector = root.cssselect('div em a img')[0]
                     alt = selector.get('alt') # 뉴스언론사 이름 가져오기(예: '중앙일보', '연합뉴스', '한겨례' 형태로 가져옴)
+
                     if alt in news_dict_keys: #선정한 언론사 목록(key)에 alt값이 있다면(메이저 언론사)
                         temp = alt  # 언론사 목록에 이름 그대로 추가
                     else: # 선정한 언론사 목록에 alt값이 없다면(마이너 언론사)
                         temp = '기타 언론사'
-         
+                    print(temp)
+                if (naver in link[j]): # 이번엔 네이버
+                    res = requests.get(link[j], headers=headers) 
+                    html = res.text
+                    root = lxml.html.fromstring(html)
+                    print('naver 뉴스', link[j])
+                    # 네이버는 모바일과 데스크톱의 선택자가 전혀 다르다..
+                    # 주소에서 m.이 있을 시 모바일
+                    if 'm.news' in link[j]:
+                        selector = root.cssselect('div a img')[0] # 모바일
+                    else:
+                        selector = root.cssselect('td div div a img')[0] # 데스크탑
+                    alt = selector.get('alt') 
+                    if alt in news_dict_keys: 
+                        temp = alt  
+                    else: 
+                        temp = '기타 언론사'
+                    print(temp)
                 if temp == '뉴스':
                     temp = '기타 언론사'
                 news_company.append(temp)
-            # 모든 작업이 끝나고 다시 링크로 돌아가기 
-            res = requests.get(innerlink, headers=headers) # 그 링크로 접속
-            html = res.text
-            root = lxml.html.fromstring(html)
+            
+            # # 모든 작업이 끝나고 다시 링크로 돌아가기 (그래야 다른 요소를 뽑는 것이 가능)
+            # res = requests.get(innerlink, headers=headers) # 그 링크로 접속
+            # html = res.text
+            # root = lxml.html.fromstring(html)
             
             return news_company

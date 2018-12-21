@@ -129,13 +129,18 @@ class WebCrawler:
                         if part_html.get('href') is None:
                             continue
                         tmplist.append(part_html.get('href')) #내부링크
+
+                    # 12.22 성목 추가
+                    # 댓글은 여러개 있을 가능성이 많기 때문에 반드시 리스트로 저장(그래야 전처리 및 분석 쉬움)
+                    elif j+2 == 10: 
+                        tmplist.append(part_html.text_content())
                     else:
                         #게시글이나 날짜 등은 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
                         if isinstance(part_html, list) == False:
                             tmpvalue = part_html.text_content()
                         else:
                             tmplist.append(part_html.text_content())
-
+                    
                 #각 게시글의 내용, 링크, 댓글을 딕셔너리에 저장
                 if tmpvalue != '':
                     ruri_content_dict[keykeys[j+2]] = tmpvalue
@@ -144,7 +149,12 @@ class WebCrawler:
 
             content = list(ruri_content_dict.values())
 
+            # 언론사 정보 가져오기 
+            # add_news_company의 param은 글 내의 링크(content[1])와 그 글의 원본 주소(innerlink)
+            # return 값으로 리스트를 받음
             news_company = news.add_news_company(content[1], innerlink)
+
+            # 그 리스트를 lower page 사전 제일 마지막에 추가 
             ruri_content_dict['news_company'] = news_company
             
             #list에 모든 dictionary type 저장.

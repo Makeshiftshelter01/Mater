@@ -70,8 +70,7 @@ class News_company:
                         temp = alt  # 언론사 목록에 이름 그대로 추가
                     else: # 선정한 언론사 목록에 alt값이 없다면(마이너 언론사)
                         temp = '기타 언론사'
-
-                        
+         
                 if temp == '뉴스':
                     temp = '기타 언론사'
                 news_company.append(temp)

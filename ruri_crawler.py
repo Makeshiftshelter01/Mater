@@ -30,6 +30,9 @@ class WebCrawler:
         start_time = time.time()
         keykeys = list(cvalues.keys())
         keyvalues = list(cvalues.values())
+        
+        # 언론사 수집을 위한 클래스 생성
+        news = News_company()
 
         # 접속할 주소 및 기타 접속 정보
         url = keyvalues[0]
@@ -55,7 +58,7 @@ class WebCrawler:
         #################################
         # 1. upper page - 상단 페이지 실행
         # 모든 페이지에 접속하여 글번호, 제목, 제목링크, 추천 정보를 저장.
-        for i in range(1, int(lastpage)):
+        for i in range(1, int(lastpage+1)):
             params = {'page': i}
             res = requests.get(url, headers=headers, params=params)
             html = res.text
@@ -100,9 +103,6 @@ class WebCrawler:
         # 변수
         i = 1 #현재 진행사항을 파악하기 위한 변수 설정
         
-        # 언론사 수집을 위한 클래스 생성
-        news = News_company()
-
         # 수집한 링크로 이동하여 게시글, 게시글 내 링크, 댓글 정보를 저장.
         for innerlink in ruri_upper_page_list[1]:
             print('크롤링 진행사항', i, ' / ', len(ruri_upper_page_list[1]))
@@ -150,7 +150,6 @@ class WebCrawler:
             #list에 모든 dictionary type 저장.
             ruri_contents_part_list.append(ruri_content_dict)
             i += 1
-
 
         ### 크롤링 시간측정 종료 ###
         print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time,2)))

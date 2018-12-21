@@ -1,6 +1,6 @@
 from configparser import ConfigParser
 import os
-        
+
 class Config:
     def __init__(self, configFilename = 'config.ini', debug = False):
         
@@ -45,6 +45,7 @@ class Config:
             the_dict[section] = {}
             for key, val in config.items(section):
                 the_dict[section][key] = val
+        
         return the_dict
 
     #ini 파일에서 전체 및 특정 자료 찾기
@@ -57,6 +58,13 @@ class Config:
         else:
             return cdict[section]
 
+    def get_coll_dict(self, target, db ='mongoDB'):
+        config = self.config
+        coll_dict = {}
+        for key, value in config.items(db):
+            coll_dict[key]= value
+        coll_dict['collection'] = target
+        return coll_dict
 
 # c = Config()
 # # b = c.read_init_config('ruriweb')

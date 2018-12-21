@@ -3,7 +3,6 @@ from ruri_connect import ConnectTo
 from ruri_config import Config
 import json
 import os
-
 import platform
 
 class CrwalingDAO:
@@ -42,3 +41,24 @@ class CrwalingDAO:
             print('no.', i+1, 'inserted id in mongodb : ', doc_id)
 
         conn.m_client.close()
+
+    def select(self, collection):
+        config = Config()
+        data = config.get_coll_dict(collection)
+        print(data.keys())
+        print(data)
+        host = "" # linux구분
+        if platform.system() != "Linux":
+            host = 'host'
+        else:
+            host = 'lhost'
+        cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
+        cnct.MongoDB()
+        cursor = cnct.m_collection.find({})
+        
+        result = []
+        for l in cursor:
+            result.append(l)
+        return result
+
+    

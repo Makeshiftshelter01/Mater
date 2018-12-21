@@ -55,9 +55,9 @@ class WebCrawler:
             res = requests.get(url, headers=headers, params=params)
             html = res.text
             root = lxml.html.fromstring(html)
-
+            
             sleep(0.5)
-
+            pagetime = time.time()
             ## 번호
             # 특이사항 : cssselect를 이용할 때 :not(.클래스이름)을 사용하여 notice class 제거.
             for part_html in root.cssselect(keys[2]):
@@ -85,6 +85,9 @@ class WebCrawler:
             ## 날짜
             for part_html in root.cssselect(keys[7]):
                 ruri_upper_page_list[5].append(part_html.text_content())
+
+            print('페이지 %d 정보 프린트 중' % (i))
+            print('페이지 당 소요시간', time.time() - pagetime)
 
         #빈 upper page 리스트 체크 - 모든 리스트를 검사해서 빈 리스트가 있으면 이를 더미 값으로 채움.
         count = 0

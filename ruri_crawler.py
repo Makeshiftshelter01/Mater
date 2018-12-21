@@ -3,6 +3,7 @@ import requests
 import lxml.html
 import cssselect
 import collections
+from news_company import News_company
 
 # 데이터 저장
 # from ruri_data import Ruri_Data
@@ -74,7 +75,7 @@ class WebCrawler:
                         ruri_upper_page_list[j].append(self.adjusthtml_pb_tail(part_html, keyvalues[1]))
                     else:
                         ruri_upper_page_list[j].append(part_html.text_content())
-            print('기본정보 수집중 : 현재페이지 %s & 소요시간 %s' % i, (round(time.time() - start_time,2)))
+            #print('기본정보 수집중 : 현재페이지 %s & 소요시간 %s' % i, (round(time.time() - start_time,2)))
         print('It takes %s seconds completing the upper page crawling and the uploading' % (round(time.time() - start_time,2)))
 
         ###############################
@@ -99,6 +100,9 @@ class WebCrawler:
         # 변수
         i = 1 #현재 진행사항을 파악하기 위한 변수 설정
         
+        # 언론사 수집을 위한 클래스 생성
+        news = News_company()
+
         # 수집한 링크로 이동하여 게시글, 게시글 내 링크, 댓글 정보를 저장.
         for innerlink in ruri_upper_page_list[1]:
             print('크롤링 진행사항', i, ' / ', len(ruri_upper_page_list[1]))
@@ -138,9 +142,15 @@ class WebCrawler:
                 else:
                     ruri_content_dict[keykeys[j+2]] = tmplist
 
+            content = list(ruri_content_dict.values())
+
+            news_company = news.add_news_company(content[1], innerlink)
+            ruri_content_dict['news_company'] = news_company
+            
             #list에 모든 dictionary type 저장.
             ruri_contents_part_list.append(ruri_content_dict)
             i += 1
+
 
         ### 크롤링 시간측정 종료 ###
         print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time,2)))

@@ -8,9 +8,9 @@ class ConnectTo:
         self.__collection = collection
 
         # mongoDB
-        self.__m_client = ""
-        self.__m_database = ""
-        self.__m_collection = ""
+        self.__m_client = None
+        self.__m_database = None
+        self.__m_collection = None
 
     @property
     def host(self):

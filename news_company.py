@@ -14,6 +14,7 @@ from time import sleep
 import time
 class News_company: 
     def add_news_company(self, link, innerlink):
+        if link != 'fillblanks':
             news_company = []
             # 주요 언론사 사전
             news_dict = { '뉴스' : 'news',                     

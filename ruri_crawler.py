@@ -31,39 +31,43 @@ class WebCrawler:
         return full_html
 
     # 빈 페이지 검사용 함수
-    def cr_pagesinspector(self, dump):
+    def cr_pagesinspector(self, dump, erased = False):
         # 모든 변수 및 리스트를 검사해서 비어 있으면 이를 더미 값으로 채움.
         
         #변수
         chkDict = {}
         chktype = None
         elements = None # 얼마나 채웠는지를 나타내는 수
-
-        if isinstance(dump, list) != True:
-            # list를 제외한 모든 변수에 fillblanks를 넣어줌 (None으로 넘어오는 값 포함)
-            if dump == None or dump == '':
-                dump = 'fillblanks'
-                chktype = type(dump)
-                elements = 1
-
-        else:    
-            # 빈 리스트의 존재 확인 후 
-            chk = sorted(dump) #빈 리스트가 모두 리스트의 앞 쪽으로 올 수 있게 정렬함 => 맨 뒤는 무조건 숫자가 있다는 뜻
-            
-            if [] in dump:
-                # 있다면
-                for i in range(0, len(dump)):
-                    # 리스트를 하나씩 검사해서
-                    if dump[i] == []:
-                        # 빈 것이 아닌 리스트에 채워진 요소 수만큼 빈 리스트에 채울 것
-                        dump[i] = ['fillblanks']*len(chk[-1])
-            
-                chktype = type(dump)
-            elements = len(chk[-1])
         
-        # if chktype != None:
-            # print('%s으로 빈 자료를 채움' % chktype)
-        chkDict = {'number': elements, 'dump' : dump}
+        if erased == True:
+            elements = 0
+            dump = 'erased'
+        else:
+            if isinstance(dump, list) != True:
+                # list를 제외한 모든 변수에 fillblanks를 넣어줌 (None으로 넘어오는 값 포함)
+                if dump == None or dump == '':
+                    dump = 'fillblanks'
+                    chktype = type(dump)
+                    elements = 1
+
+            else:    
+                # 빈 리스트의 존재 확인 후 
+                chk = sorted(dump) #빈 리스트가 모두 리스트의 앞 쪽으로 올 수 있게 정렬함 => 맨 뒤는 무조건 숫자가 있다는 뜻
+                
+                if [] in dump:
+                    # 있다면
+                    for i in range(0, len(dump)):
+                        # 리스트를 하나씩 검사해서
+                        if dump[i] == []:
+                            # 빈 것이 아닌 리스트에 채워진 요소 수만큼 빈 리스트에 채울 것
+                            dump[i] = ['fillblanks']*len(chk[-1])
+                
+                    chktype = type(dump)
+                elements = len(chk[-1])
+            
+            # if chktype != None:
+                # print('%s으로 빈 자료를 채움' % chktype)
+            chkDict = {'number': elements, 'dump' : dump}
         return chkDict
     
     # 상단 페이지의 정보 크롤링
@@ -96,7 +100,7 @@ class WebCrawler:
             html = res.text
             root = lxml.html.fromstring(html)
             
-            sleep(0.3)
+            sleep(0.1)
             
             for j in range(startini, endini):                
                 for part_html in root.cssselect(keyvalues[j+2]):
@@ -128,12 +132,27 @@ class WebCrawler:
         # 12.
 
         # 변수
-        i = 1                           #현재 진행사항을 파악하기 위한 변수 설정
-        contents_part_list = []         #컨텐츠용 변수
+        count_cr = 1                    # 현재 진행사항을 파악하기 위한 변수 설정
+        contents_part_list = []         # 컨텐츠용 변수
         news = News_company()           # 언론사 수집을 위한 클래스 생성
 
+        # #접속시도
+        # try:
+        #     pass
+        # # 없는 페이지.
+        # except expression as identifier:
+        #     pass
+        # except as :
+        #     pass
+        # else:
+        #     #문제 없을 시 코드
+        # finally:
+        #     # 해당 페이지의 정보를 모두 blank 채우고 다음페이지 호출
+            
+
+        
         for innerlink in upper_page_list[1]:
-            print('크롤링 진행사항 :', i, ' / ', len(upper_page_list[1]))
+            print('크롤링 진행사항 :', count_cr, ' / ', len(upper_page_list[1]))
             
             # 변수
             content_dict = {}
@@ -143,9 +162,9 @@ class WebCrawler:
             inner_html = inner_res.text
             inner_root = lxml.html.fromstring(inner_html)
 
-            sleep(0.3)
+            sleep(0.1)
 
-            # ini 파일에 등록한 내용중 lower page에 해당하는 내용 크롤링
+            # ini 파일에 등록한 내용중 lower page에 해당하는 내용 크롤링하고 검사
             for j in range(startini, endini):
                 tmpvalue = None # 리턴할 변수를 하나로 줄이기 위해 None으로 선언
                 tmpstr = ''
@@ -173,9 +192,15 @@ class WebCrawler:
                     elif len(tmplist) > 0:
                         tmpvalue = tmplist
 
+                #else
+                
                 #내용이 비어 있다면 채우고 각 게시글의 내용, 링크, 댓글 등을 딕셔너리에 저장
                 Dict_completed_chk = self.cr_pagesinspector(tmpvalue).values()
                 content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
+
+                # #finally
+                # Dict_completed_chk = self.cr_pagesinspector(tmpvalue, True).values()
+                # content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
                 
                 # print('빈 셀을 채운 개수 : ', list(Dict_completed_chk)[0])
 
@@ -186,7 +211,7 @@ class WebCrawler:
             
             #list에 모든 dictionary type 저장.
             contents_part_list.append(content_dict)
-            i += 1
+            count_cr += 1
             
         return contents_part_list
 

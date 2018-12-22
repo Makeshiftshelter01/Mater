@@ -1,4 +1,4 @@
-
+# selenium 미완
 # 인벤 글 긁기
 from selenium import webdriver
 from pymongo import MongoClient

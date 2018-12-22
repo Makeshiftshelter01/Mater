@@ -70,7 +70,6 @@ class ConnectTo:
 
     #현재는 mongoDB만 가능하지만 추후 다른 DB도 선택할 수 있도록 함수 추가
 
-    # 속성값을 넘겨야 하는데 단지 str으로 인식 어떻게 넘겨야 하는가?
     def MongoDB(self):
         self.__m_client = MongoClient(self.__host, self.__port)
         self.__m_database = self.m_client[self.__database]

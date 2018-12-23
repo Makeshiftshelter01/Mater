@@ -1,18 +1,10 @@
 # 접속 및 파싱
 import requests
 import lxml.html
-# import lxml.etree
+from lxml import etree
 import cssselect
 import collections
 from news_company import News_company
-
-# error = lxml.etree.ParseError()
-# msg = error.msg
-# if msg == "Document is empty"
-#     pass
-
-# 데이터 저장
-# from ruri_data import Ruri_Data
 
 # 딜레이
 from time import sleep
@@ -41,7 +33,7 @@ class WebCrawler:
         
         if erased == True:
             elements = 0
-            dump = 'erased'
+            dump = 'errorpassed'
         else:
             if isinstance(dump, list) != True:
                 # list를 제외한 모든 변수에 fillblanks를 넣어줌 (None으로 넘어오는 값 포함)
@@ -136,71 +128,78 @@ class WebCrawler:
         contents_part_list = []         # 컨텐츠용 변수
         news = News_company()           # 언론사 수집을 위한 클래스 생성
 
-        # #접속시도
-        # try:
-        #     pass
-        # # 없는 페이지.
-        # except expression as identifier:
-        #     pass
-        # except as :
-        #     pass
-        # else:
-        #     #문제 없을 시 코드
-        # finally:
-        #     # 해당 페이지의 정보를 모두 blank 채우고 다음페이지 호출
-            
-
         
+        # 수집한 내부링크(게시판)의 수만큼 loop를 돌며 접속 
         for innerlink in upper_page_list[1]:
             print('크롤링 진행사항 :', count_cr, ' / ', len(upper_page_list[1]))
             
             # 변수
+            errorpass = False #재접속 확인
             content_dict = {}
             
-            # 접속과 크롤링
-            inner_res = requests.get(innerlink, headers=headers)
-            inner_html = inner_res.text
-            inner_root = lxml.html.fromstring(inner_html)
+            try:
+                # 접속과 크롤링
+                inner_res = requests.get(innerlink, headers=headers)
+                inner_html = inner_res.text
+                inner_root = lxml.html.fromstring(inner_html)
 
-            sleep(0.1)
+                sleep(0.05)
 
-            # ini 파일에 등록한 내용중 lower page에 해당하는 내용 크롤링하고 검사
-            for j in range(startini, endini):
-                tmpvalue = None # 리턴할 변수를 하나로 줄이기 위해 None으로 선언
-                tmpstr = ''
-                tmplist = []
-                for part_html in inner_root.cssselect(keyvalues[j+2]):
-                    if j+2 == 9:
-                        # 특이사항 : a태그로 link를 불러왔으나, 그림파일 등 a 태크를 사용하는 경우 blank 저장
-                        if part_html.get('href') is None:
-                            continue
-                        tmplist.append(part_html.get('href')) #내부링크
-                    else:
-                        #게시글이나 날짜 등은 게시물 내에서 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
-                        if isinstance(part_html, list) == False:
-                            tmpstr = part_html.text_content()
-                        # 12.22 성목 추가
-                        # 댓글은 여러개 있을 가능성이 많기 때문에 반드시 리스트로 저장(그래야 전처리 및 분석 쉬움)
-                        elif j+2 == 10: 
-                            tmplist.append(part_html.text_content())
+                # ini 파일에 입력한 CSS tag중 lower page에 해당하는 행 번호를 가져와
+                for j in range(startini, endini):
+                    tmpvalue = None # 리턴할 변수를 하나로 줄이기 위해 None으로 선언
+                    tmpstr = ''
+                    tmplist = []
+                # 해당 번호를 넣어준다.
+                    for part_html in inner_root.cssselect(keyvalues[j+2]):
+                        if j+2 == 9:
+                            # 특이사항 : a태그로 link를 불러왔으나, 그림파일 등 a 태크를 사용하는 경우 blank 저장
+                            if part_html.get('href') is None:
+                                continue
+                            tmplist.append(part_html.get('href')) #내부링크
                         else:
-                            tmplist.append(part_html.text_content())
-                
-                # tmpvalue가 None일 때 str이 0이되면 리스트가 된다
-                    if len(tmpstr) > 0:
-                        tmpvalue = tmpstr
-                    elif len(tmplist) > 0:
-                        tmpvalue = tmplist
+                            #게시글이나 날짜 등은 게시물 내에서 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
+                            if isinstance(part_html, list) == False:
+                                tmpstr = part_html.text_content()
+                            # 12.22 성목 추가
+                            # 댓글은 여러개 있을 가능성이 많기 때문에 반드시 리스트로 저장(그래야 전처리 및 분석 쉬움)
+                            elif j+2 == 10: 
+                                tmplist.append(part_html.text_content())
+                            else:
+                                tmplist.append(part_html.text_content())
+                    
+                        # tmpvalue가 None일 때 str이 0이되면 리스트가 된다
+                        if len(tmpstr) > 0:
+                            tmpvalue = tmpstr
+                        elif len(tmplist) > 0:
+                            tmpvalue = tmplist
 
-                #else
+                        # lower page에 속한 댓글이나 추천수 등 개별 항목마다 검사
+                        Dict_completed_chk = self.cr_pagesinspector(tmpvalue).values()
+                        content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
                 
-                #내용이 비어 있다면 채우고 각 게시글의 내용, 링크, 댓글 등을 딕셔너리에 저장
-                Dict_completed_chk = self.cr_pagesinspector(tmpvalue).values()
-                content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
+            except ConnectionError as e:
+                errorpass = True
+                print('%s 오류 다음 페이지에서 재접속' % e)
+                
+                #여기에 재접속 코드 삽입. => 적용취소
+                            
 
-                # #finally
-                # Dict_completed_chk = self.cr_pagesinspector(tmpvalue, True).values()
-                # content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
+            except etree.ParserError as e:
+                errorpass = True
+                print('%s 오류로 다음 페이지에서 재접속' % e)
+                # 내용이 비어 있다면 채우고 각 게시글의 내용, 링크, 댓글 등을 딕셔너리에 저장
+                # 해당 페이지의 정보를 모두 blank 채우고 다음페이지 호출
+                
+            finally:
+                # 만일 재접속이라면,
+                if errorpass == True:
+                    print('오류가 일어난 페이지 처리')
+                    #CSS에 등록된 lower page의 개수만큼 loop를 돌며 빈칸을 채움
+                    for j in range(startini, endini):
+                        tmpvalue = None
+                        Dict_completed_chk = self.cr_pagesinspector(tmpvalue, errorpass).values()
+                        content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
                 
                 # print('빈 셀을 채운 개수 : ', list(Dict_completed_chk)[0])
 
@@ -253,4 +252,3 @@ class WebCrawler:
         ### 크롤링 시간측정 종료 ###
         print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time,2)))
         return (upper_page_list, contents_part_list)
-    

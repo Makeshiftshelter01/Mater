@@ -14,7 +14,10 @@ from time import sleep
 import time
 class News_company: 
     def add_news_company(self, link, innerlink):
-        if link != 'fillblanks':
+        if link == 'fillblanks':
+            news_company = 'fillblanks'
+        elif link != 'fillblanks':
+            print('링크발견')
             news_company = []
             # 주요 언론사 사전
             news_dict = { '뉴스' : 'news',                     
@@ -98,4 +101,4 @@ class News_company:
             # html = res.text
             # root = lxml.html.fromstring(html)
             
-            return news_company
+        return news_company

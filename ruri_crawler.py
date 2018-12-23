@@ -130,7 +130,7 @@ class WebCrawler:
         # 변수
         i = 1                           #현재 진행사항을 파악하기 위한 변수 설정
         contents_part_list = []         #컨텐츠용 변수
-        news = News_company()           # 언론사 수집을 위한 클래스 생성
+        #news = News_company()           # 언론사 수집을 위한 클래스 생성
 
         for innerlink in upper_page_list[1]:
             print('크롤링 진행사항 :', i, ' / ', len(upper_page_list[1]))
@@ -179,6 +179,7 @@ class WebCrawler:
                 
                 # print('빈 셀을 채운 개수 : ', list(Dict_completed_chk)[0])
 
+            # 이전 코드(크롤링 하나 할 때 같이 함)
             # content = list(content_dict.values())
 
             # news_company = news.add_news_company(content[1], innerlink)
@@ -199,7 +200,7 @@ class WebCrawler:
         keykeys = list(cvalues.keys())
         keyvalues = list(cvalues.values())
         url = keyvalues[0] # 접속할 주소 및 기타 접속 정보
-        # news = News_company() # 언론사 수집을 위한 인스턴스 생성        
+        news = News_company() # 언론사 수집을 위한 인스턴스 생성        
         headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
         print('%s 에 접속합니다. : ' % url)
 
@@ -207,14 +208,29 @@ class WebCrawler:
         # 1. upper page - 상단 페이지 실행
         upper_page_list = self.cr_upperpages(url, headers, lastpage, keyvalues, start_time)
         print('It takes %s seconds completing the upper page crawling and the uploading' % (round(time.time() - start_time,2)))
-
+        #print(upper_page_list)
         #################################
         # 2. lower page - 하단 페이지 실행
         contents_part_list = self.cr_lowerpages(headers, upper_page_list, keykeys, keyvalues)
         
         #################################
         # 3. 언론사 정보 가져오기 => contents_part_list를 호출하여 다시 contents_part_list를 return
+        #print(contents_part_list)
+        
+        # 모든 크롤링이 끝나고 contents_part_list에 news_company 추가
 
+        print('News Company Analyzing...')
+        for i in range(len(contents_part_list)):
+            board_link = upper_page_list[1][i] # 게시물 자체 링크(혹시나 그 링크로 다시 돌아가야 될 때 대비(뉴스 컴퍼니 함수에선 현재 비활성화))
+            #print(board_link)
+            links_in_content = contents_part_list[i]['clinks'] # 게시물 내에 
+            #print(links_in_content)
+            news_company = news.add_news_company(links_in_content, board_link)
+            contents_part_list[i]['news_company'] = news_company
+            #print(contents_part_list[i])
+
+
+        # 이전 코드
         # add_news_company의 param은 글 내의 링크(content[1])와 그 글의 원본 주소(innerlink)
         # return 값으로 리스트를 받음
         # news_company = news.add_news_company(content[1], innerlink)

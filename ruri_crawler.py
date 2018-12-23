@@ -23,12 +23,13 @@ class WebCrawler:
         return full_html
 
     # 빈 페이지 검사용 함수
-    def cr_pagesinspector(self, dump, ehapped = False):
+    def cr_pagesinspector(self, udump, ehapped = False):
         # 모든 변수 및 리스트를 검사해서 비어 있으면 이를 더미 값으로 채움.
         
         #변수
         chkDict = {}
         # chktype = None
+        dump = udump
         elements = None # 얼마나 채웠는지를 나타내는 수
         
         # 에러가 발생하면,
@@ -62,7 +63,7 @@ class WebCrawler:
             
             # if chktype != None:
                 # print('%s으로 빈 자료를 채움' % chktype)
-            chkDict = {'number': elements, 'dump' : dump}
+        chkDict = {'number': elements, 'dump' : dump}
         return chkDict
     
     # 상단 페이지의 정보 크롤링
@@ -186,6 +187,9 @@ class WebCrawler:
                 print('%s 오류 다음 페이지에서 재접속' % e)
                 
                 #여기에 재접속 코드 삽입. => 적용취소
+
+            # except ConnectionResetError as e:
+            #     pass
                             
 
             except etree.ParserError as e:

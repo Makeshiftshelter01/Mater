@@ -23,25 +23,28 @@ class WebCrawler:
         return full_html
 
     # 빈 페이지 검사용 함수
-    def cr_pagesinspector(self, dump, erased = False):
+    def cr_pagesinspector(self, dump, ehapped = False):
         # 모든 변수 및 리스트를 검사해서 비어 있으면 이를 더미 값으로 채움.
         
         #변수
         chkDict = {}
-        chktype = None
+        # chktype = None
         elements = None # 얼마나 채웠는지를 나타내는 수
         
-        if erased == True:
+        # 에러가 발생하면,
+        if ehapped == True:
             elements = 0
             dump = 'errorpassed'
+        # 에러가 발생하지 않으면,
         else:
+            # 넘어온 값이 리스트가 아닐 때
             if isinstance(dump, list) != True:
-                # list를 제외한 모든 변수에 fillblanks를 넣어줌 (None으로 넘어오는 값 포함)
+                # fillblanks를 넣어줌 (None으로 넘어오는 값 포함)
                 if dump == None or dump == '':
                     dump = 'fillblanks'
                     chktype = type(dump)
                     elements = 1
-
+            # 리스트일 때,
             else:    
                 # 빈 리스트의 존재 확인 후 
                 chk = sorted(dump) #빈 리스트가 모두 리스트의 앞 쪽으로 올 수 있게 정렬함 => 맨 뒤는 무조건 숫자가 있다는 뜻
@@ -150,7 +153,7 @@ class WebCrawler:
                     tmpvalue = None # 리턴할 변수를 하나로 줄이기 위해 None으로 선언
                     tmpstr = ''
                     tmplist = []
-                # 해당 번호를 넣어준다.
+                    # 해당 행(예를 들어 댓글)에 따른 번호를 넣어준다.
                     for part_html in inner_root.cssselect(keyvalues[j+2]):
                         if j+2 == 9:
                             # 특이사항 : a태그로 link를 불러왔으나, 그림파일 등 a 태크를 사용하는 경우 blank 저장
@@ -174,9 +177,9 @@ class WebCrawler:
                         elif len(tmplist) > 0:
                             tmpvalue = tmplist
 
-                        # lower page에 속한 댓글이나 추천수 등 개별 항목마다 검사
-                        Dict_completed_chk = self.cr_pagesinspector(tmpvalue).values()
-                        content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
+                    # 한 행(댓글 등)이 종료되면, 개별 항목마다 검사하여 fillblanks를 채워준다.
+                    Dict_completed_chk = self.cr_pagesinspector(tmpvalue).values()
+                    content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
                 
             except ConnectionError as e:
                 errorpass = True
@@ -219,6 +222,8 @@ class WebCrawler:
     def crawlingposts(self, lastpage, cvalues):
         ### 크롤링 시간측정 시작 ####
         start_time = time.time()
+        u_time = None
+        l_time = None
         
         ### 변수설정
         keykeys = list(cvalues.keys())
@@ -231,12 +236,14 @@ class WebCrawler:
         #################################
         # 1. upper page - 상단 페이지 실행
         upper_page_list = self.cr_upperpages(url, headers, lastpage, keyvalues, start_time)
-        print('It takes %s seconds completing the upper page crawling and the uploading' % (round(time.time() - start_time,2)))
+        u_time = time.time()
+        print('It takes %s seconds completing the upper page crawling and the uploading' % (round(u_time - start_time,2)))
         #print(upper_page_list)
         #################################
         # 2. lower page - 하단 페이지 실행
         contents_part_list = self.cr_lowerpages(headers, upper_page_list, keykeys, keyvalues)
-        print('It takes %s seconds completing the lower page crawling and the uploading' % (round(time.time() - start_time,2)))
+        l_time = time.time()
+        print('It takes %s seconds completing the lower page crawling and the uploading' % (round(l_time - u_time,2)))
         sleep(2)
         #################################
         # 3. 언론사 정보 가져오기 => contents_part_list를 호출하여 다시 contents_part_list를 return
@@ -253,7 +260,7 @@ class WebCrawler:
             news_company = news.add_news_company(links_in_content, board_link)
             contents_part_list[i]['news_company'] = news_company
             #print(contents_part_list[i])
-        print('It takes %s seconds completing the news info crawling and the uploading' % (round(time.time() - start_time,2)))
+        print('It takes %s seconds completing the news info crawling and the uploading' % (round(time.time() - l_time,2)))
 
         ### 크롤링 시간측정 종료 ###
         print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time,2)))

@@ -29,14 +29,16 @@ print(len(gd.html))
 print(len(gd.title))
 print(len(gd.thumbup))
 print(len(gd.thumbdown))
-print(len(gd.date))
+#print(len(gd.date)) # 인서트 할 때 문제인건지 현재 이 항목이 없음 (무시)
 print(len(gd.ccontent))
 print(len(gd.clinks))
 print(len(gd.creplies))
 print(len(gd.cthumbupl))
 print(len(gd.cthumbdownl))
 print(len(gd.idate))
-print(len(gd.news_company)) # 모든 항목이 길이가 같음
+#print(len(gd.news_company)) # 몽고에 현재 언론사 항목이 있는 레코드가 있고 없는 레코드가 섞여있어서 불러올 때 에러, 한번 싹 밀고 다시 크롤링하면 문제없이 불러질 듯
+# 
+#  # 모든 항목이 길이가 같음
 
 
 # 항목별 변수 목록

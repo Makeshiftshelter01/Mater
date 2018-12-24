@@ -6,6 +6,8 @@ import cssselect
 import collections
 from news_company import News_company
 
+### ***** 나가기용!
+
 # error = lxml.etree.ParseError()
 # msg = error.msg
 # if msg == "Document is empty"

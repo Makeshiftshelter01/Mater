@@ -67,14 +67,20 @@ class News_company:
                     html = res.text
                     root = lxml.html.fromstring(html)
                     print('daum 뉴스', link[j])
-                    selector = root.cssselect('div em a img')[0]
-                    alt = selector.get('alt') # 뉴스언론사 이름 가져오기(예: '중앙일보', '연합뉴스', '한겨례' 형태로 가져옴)
 
-                    if alt in news_dict_keys: #선정한 언론사 목록(key)에 alt값이 있다면(메이저 언론사)
-                        temp = alt  # 언론사 목록에 이름 그대로 추가
-                    else: # 선정한 언론사 목록에 alt값이 없다면(마이너 언론사)
-                        temp = '기타 언론사'
-                    print(temp)
+                    try:
+                        selector = root.cssselect('div em a img')[0]
+                        alt = selector.get('alt') # 뉴스언론사 이름 가져오기(예: '중앙일보', '연합뉴스', '한겨례' 형태로 가져옴)
+
+                        if alt in news_dict_keys: #선정한 언론사 목록(key)에 alt값이 있다면(메이저 언론사)
+                            temp = alt  # 언론사 목록에 이름 그대로 추가
+                        else: # 선정한 언론사 목록에 alt값이 없다면(마이너 언론사)
+                            temp = '기타 언론사'
+                        print(temp)
+                    except: 
+                        temp = 'Selector Not Found'
+                        print(temp)
+                        
                 if (naver in link[j]): # 이번엔 네이버
                     res = requests.get(link[j], headers=headers) 
                     html = res.text
@@ -82,18 +88,25 @@ class News_company:
                     print('naver 뉴스', link[j])
                     # 네이버는 모바일과 데스크톱의 선택자가 전혀 다르다..
                     # 주소에서 m.이 있을 시 모바일
-                    if 'm.news' in link[j]:
-                        selector = root.cssselect('div a img')[0] # 모바일
-                    else:
-                        selector = root.cssselect('td div div a img')[0] # 데스크탑
-                    alt = selector.get('alt') 
-                    if alt in news_dict_keys: 
-                        temp = alt  
-                    else: 
-                        temp = '기타 언론사'
-                    print(temp)
-                if temp == '뉴스':
+                    try:
+                        if 'm.news' in link[j]:
+                            selector = root.cssselect('div a img')[0] # 모바일
+                        else:
+                            selector = root.cssselect('td div div a img')[0] # 데스크탑
+                        alt = selector.get('alt') 
+                        if alt in news_dict_keys: 
+                            temp = alt  
+                        else: 
+                            temp = '기타 언론사'
+                        print(temp)
+                    except: # 스포츠 뉴스나 특별 뉴스는 선택자 형태가 또 다르다!...
+                        temp = 'Selector Not Found'
+                        print(temp)
+
+                if temp == '뉴스': # news 라는 키워드때문에 '뉴스' 로 걸러지긴 했는데 언론사 리스트에 없다면 기타 언론사 
                     temp = '기타 언론사'
+
+
                 news_company.append(temp)
             
             # # 모든 작업이 끝나고 다시 링크로 돌아가기 (그래야 다른 요소를 뽑는 것이 가능)

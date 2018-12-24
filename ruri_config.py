@@ -31,6 +31,7 @@ class Config:
     #입력한 웹사이트를 ini 파일에서 찾기 (webcrawling으로 ini파일의 목표는 고정)
     def read_init_config(self, target, section='webcrawling'):
         config = self.config
+        # 입력한 사이트가 존재하면, True 논리연산자 리턴
         if target in config[section]:
             print('%s를 찾았습니다. 크롤링을 시작합니다. ' % target)
             return True

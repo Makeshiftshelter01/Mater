@@ -13,14 +13,43 @@
 from ruri_service import Crawling
 from ruri_dao import CrwalingDAO
 import time
+import os
+
+# import logging
+# import logging.handlers
+
+# # logger 인스턴스 생성 및 로그레벨 설정
+# # logger leverl - DEBUG < INFO < WARNING < ERROR < CRITICAL
+# logger = logging.getLogger('my')
+# logger.setLevel(logging.INFO)
+
+# # fileHandler와 streamHandler를 생성 (로깅한 정보가 파일과 콘솔로 출력되게 설정)
+# # 파일 생성시 디렉토리도 함께 만듦.
+# if not(os.path.isdir('./log/')):
+#     os.makedirs('./log/')
+# # file에 출력
+# fileHandler = logging.FileHandler('./log/my.log')
+# # console에 출력
+# streamHandler = logging.StreamHandler()
+
+# # Handler를 logging에 추가
+# logger.addHandler(fileHandler)
+# logger.addHandler(streamHandler)
+
+# # logging (level을 info이상으로 했기 때문에 debug는 출력이 안됨.)
+# logger.debug('debug')
+# logger.info('info')
+# logger.warning('warning')
+# logger.error('error')
+# logger.critical('critical')
 
 # 프로그램 시작 측정
 start_time = time.time()
 
 # 크롤링
 cr = Crawling() #크롤링
-cd = CrwalingDAO() #DB
-cd.insertone(cr.crawling('cook', 4)) #ruriweb, 2page까지
+cd = CrwalingDAO() #현재는 mongoDB
+cd.insert(cr.crawling('ruriweb', 4000)) #저장할 컬렉션은 ini 파일에서 변경해야 함
 
 # 프로그램 종료 측정 및 결과 출력
 print('It takes %s seconds completing the crawling and the uploading' % (round(time.time() - start_time,2)))

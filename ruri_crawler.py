@@ -151,6 +151,7 @@ class WebCrawler:
                 tmpstr = ''
                 tmplist = []
                 for part_html in inner_root.cssselect(keyvalues[j+2]):
+                    #print(j+2, part_html.text_content(), isinstance(part_html, list))
                     if j+2 == 9:
                         # 특이사항 : a태그로 link를 불러왔으나, 그림파일 등 a 태크를 사용하는 경우 blank 저장
                         if part_html.get('href') is None:
@@ -158,12 +159,15 @@ class WebCrawler:
                         tmplist.append(part_html.get('href')) #내부링크
                     else:
                         #게시글이나 날짜 등은 게시물 내에서 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
-                        if isinstance(part_html, list) == False:
+                        if j+2 == 10: 
+                            tmplist.append(part_html.text_content())
+
+                        elif isinstance(part_html, list) == False:
                             tmpstr = part_html.text_content()
                         # 12.22 성목 추가
                         # 댓글은 여러개 있을 가능성이 많기 때문에 반드시 리스트로 저장(그래야 전처리 및 분석 쉬움)
-                        elif j+2 == 10: 
-                            tmplist.append(part_html.text_content())
+                        
+                            
                         else:
                             tmplist.append(part_html.text_content())
                 

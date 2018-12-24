@@ -185,6 +185,9 @@ class WebCrawler:
             except ConnectionError as e:
                 errorpass = True
                 print('%s 오류 다음 페이지에서 재접속' % e)
+
+                #톰캣서버를 활성화 시킨다음에 서버에 접속시키면서 강제로 에러를 발생시켜
+                #connectionerror를 누르면 해결이 되는지 확인.
                 
                 #여기에 재접속 코드 삽입. => 적용취소
 
@@ -199,7 +202,7 @@ class WebCrawler:
                 # 해당 페이지의 정보를 모두 blank 채우고 다음페이지 호출
                 
             finally:
-                # 만일 재접속이라면,
+                # 만일 에러가났다면,
                 if errorpass == True:
                     print('오류가 일어난 페이지 처리')
                     #CSS에 등록된 lower page의 개수만큼 loop를 돌며 빈칸을 채움

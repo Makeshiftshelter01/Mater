@@ -24,6 +24,7 @@ class CrwalingDAO:
         cnct.MongoDB() #mongoDB 접속, 현재는 mongoDB만 가능하지만 추후 다른 DB도 선택할 수 있도록 변경
         return cnct
 
+    # 한 페이지만큼만 mongodb에 넣어줌.
     def insert_one(self, conn, keys, startini, endini, upper, lower, k):
         mongoDict = {}
         for j in range(startini, endini-1):

@@ -2,7 +2,7 @@ from ruri_dao import CrwalingDAO
 from get_element import getElement
 cd = CrwalingDAO()
 
-result = cd.select('ilbe')
+result = cd.select('ilbeforcleaning')
 # 원하는 콜렉션에서 데이터 가져오기 
 
 gd = getElement(result)
@@ -25,18 +25,32 @@ gd = getElement(result)
 # print(gd.id)            # object_id (새로 db를 만드는거니 필욘 없겠지만 혹시나..)
 # print(gd.no)            # 게시물번호
 # print(gd.html)          # 게시글로 가는 링크
-# print(gd.title)         # 글 제목
+#print(gd.title[99])         # 글 제목
 # print(gd.thumbup)       # 추천(밖)
 # print(gd.thumbdown)     # 비추천(밖)
 # #print(gd.date)          # 날짜(밖)
-print(gd.ccontent[1])
-print(gd.ccontent[86])       # 내용(글 내부)
+# print(gd.ccontent[1])
+# print(gd.ccontent[86])       # 내용(글 내부)
 # print(gd.clinks)        # 링크(글 내부)
-# print(gd.creplies)      # 댓글(글 내부)
-# print(gd.cthumbupl)     # 추천(글 내부)
+#print(gd.creplies[99])      # 댓글(글 내부)
+print(len(gd.cthumbupl))     # 추천(글 내부)
 # print(gd.cthumbdownl)   # 비추천(글 내부) 
 # print(gd.idate)         # 날짜(글 내부)
 # #print(gd.news_company)  # 언론사(추출)
 
+import re
+from datetime import datetime
 
+idate = []
+creplies =[]
+
+# for i in range(5,10):          
+#     rawdata = gd.idate[i]
+#     cleaned =re.sub('[\t。\r\n\]*','', rawdata)
+#     cleaned =re.sub('[작성일:]','', cleaned)
+#     cleaned =cleaned.lstrip()
+#     toDatetype = datetime.strptime(cleaned, '%Y-%m-%d %H%M%S')
+#     idate.append(toDatetype)
+# print(len(idate))
+# print(idate)
 

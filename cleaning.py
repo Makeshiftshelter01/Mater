@@ -5,11 +5,12 @@ import re
 import os
 import platform
 from configparser import ConfigParser
+from datetime import datetime
 
 cd = CrwalingDAO()
 
-result = cd.select('cook3')
-# 원하는 콜렉션에서 데이터 가져오기 
+result = cd.select('clienforcleaning')
+# 원하는 콜렉션에서 데이터 가져오기 #### 이 이분도 설정해야함
 
 gd = getElement(result)
 # 가져온 데이터를 항목별로 나누기 
@@ -17,30 +18,106 @@ gd = getElement(result)
 
 
 # 전처리된 데이터를 담을 리스트 준비(제목, 내용, 댓글말 전처리할 예정)
+cno = []
 title = []
+thumbup = []
+cthumbdownl = []
+cthumbupl = []
 ccontent = []
 creplies = []
+clinks = [] 
+idate = []
 
 
 # 전처리를 담당할 cleaner 클래스 선언
 class cleaner:
     
-    def __init__(self, feature, listname):
+    def __init__(self, feature, listname, collection):
         self.feature = feature
         self.listname = listname
-
+        self.collection = collection
 
     # feature : gd.title, gd.content
     def cleaning(self):
 
-         
-        for i in range(len(gd.id)):
-            rawdata = self.feature[i]
-            cleaned =re.sub('[\!\?\/\★\♥\$\&\@\%\~\[\]\(\)\{\}\.\,\=/+\-\_\:\;\*\^]*','', rawdata)
-            cleaned =re.sub('[\t\r\n\xa0]*','', cleaned)
-            cleaned =re.sub('[A-Za-z0-9]*','', cleaned)
-            self.listname.append(cleaned)
-        #print(self.listname)
+        if self.feature == gd.creplies:
+            for i in range(len(gd.creplies)):
+                cleandList = []
+                #print('문자열로 %s' % i," ".join(gd.creplies[i]))
+                list2string = '""'.join(gd.creplies[i])
+                #print(list2string)
+                list2string =re.sub('[\!\?\/\★\♥\$\&\@\%\~\[\]\(\)\{\}\.\,\=/+\-\_\:\;\*\^]*','', list2string)
+                list2string =re.sub('[\t\r\n\xa0]*','', list2string)
+                cleaned =re.sub('[A-Za-z0-9]*','', list2string)
+                cleandList.append(cleaned) 
+                creplies.append(cleandList)
+
+        elif self.feature == gd.clinks:
+            for i in range(len(gd.clinks)):
+                cleandList = []
+                list2string = " ".join(gd.clinks[i])
+                list2string =re.sub('[\!\?\/\★\♥\$\&\@\%\~\[\]\(\)\{\}\.\,\=/+\-\_\:\;\*\^]*','', list2string)
+                list2string =re.sub('[\t\r\n\xa0]*','', list2string)
+                cleaned =re.sub('[A-Za-z0-9]*','', list2string)
+                cleandList.append(cleaned) 
+                clinks.append(cleandList)
+        
+        #### 82 쿡 시간    #### collection 이름 바꾸어줄 것!!!
+        elif self.feature == gd.idate and self.collection == 'cookforcleaning':
+            for i in range(len(gd.idate)):
+                rawdata = gd.idate[i]
+                cleaned =re.sub('[\t\r\n\xa0]*','', rawdata)
+                cleaned =re.sub('[작성일:]','', cleaned)
+                cleaned =cleaned.lstrip()
+                toDatetype = datetime.strptime(cleaned, '%Y-%m-%d %H%M%S')
+                idate.append(toDatetype)
+                    
+        #### ruriweb 시간  #### collection 이름 바꾸어줄 것!!!
+        elif self.feature == gd.idate and self.collection == 'ruriforcleaning':
+            for i in range(len(gd.idate)):
+                rawdata = gd.idate[i]
+                cleaned =re.sub('[\(\)]*','', rawdata)
+                cleaned =re.sub('[\t\r\n\xa0]*','', cleaned)
+                cleaned =cleaned.lstrip()
+                toDatetype = datetime.strptime(cleaned, '%Y.%m.%d %H:%M:%S')
+                idate.append(toDatetype)
+        
+        #### ilbe 시간   #### collection 이름 바꾸어줄 것!!!
+        elif self.feature == gd.idate and self.collection == 'ilbeforcleaning':
+            for i in range(len(gd.idate)):
+                rawdata = gd.idate[i]+' 00:00:00'
+                toDatetype = datetime.strptime(rawdata , '%Y.%m.%d %H:%M:%S')
+                idate.append(toDatetype)
+                print(idate)
+
+
+        elif self.feature == gd.thumbup:
+            for i in range(len(gd.thumbup)):
+                rawdata = self.feature[i]
+                cleaned =re.sub('[\t\r\n\s]*','', rawdata)        
+                self.listname.append(cleaned)
+        
+        elif self.feature == gd.cthumbdownl:
+            for i in range(len(gd.cthumbdownl)):
+                rawdata = self.feature[i]
+                cleaned =re.sub('[\t\r\n\s]*','', rawdata)        
+                self.listname.append(cleaned)
+        
+        elif self.feature == gd.cthumbupl:
+            for i in range(len(gd.cthumbupl)):
+                rawdata = self.feature[i]
+                cleaned =re.sub('[\t\r\n]*','', rawdata)        
+                self.listname.append(cleaned)
+        
+        
+        else:  
+            for i in range(len(gd.id)):
+                rawdata = self.feature[i]
+                cleaned =re.sub('[\!\?\/\★\♥\$\&\@\%\~\[\]\(\)\{\}\.\,\=/+\-\_\:\;\*\^]*','', rawdata)
+                cleaned =re.sub('[\t\r\n\xa0]*','', cleaned)
+                cleaned =re.sub('[A-Za-z0-9]*','', cleaned)
+                self.listname.append(cleaned)
+                #print(self.listname)
 
 
 
@@ -126,16 +203,17 @@ class update_db:
             mongoDict['no'] = gd.no[i]
             mongoDict['html'] = gd.html[i]
             mongoDict['title'] = title[i]
-            mongoDict['thumbup'] = gd.thumbup[i]
+            mongoDict['thumbup'] = thumbup[i]
             mongoDict['thumbdown'] = gd.thumbdown[i]
             mongoDict['ccontent'] = ccontent[i]
-            mongoDict['clinks'] = gd.clinks[i]
-            mongoDict['creplie'] = creplies[i]
             mongoDict['cthumbupl'] = gd.cthumbupl[i]
             mongoDict['cthumbdownl'] = gd.cthumbdownl[i]
-            mongoDict['idate'] = gd.idate[i]
+            mongoDict['idate'] = idate[i]
             mongoDict['news_company'] = gd.news_company[i]
-            #print(mongoDict)
+            mongoDict['clinks'] = clinks[i]
+            mongoDict['creplies'] = creplies[i]
+            
+
 
             doc_id = conn.m_collection.insert_one(mongoDict).inserted_id
             print('no.', i+1, 'inserted id in mongodb : ', doc_id)

@@ -6,11 +6,10 @@ import cssselect
 import collections
 from news_company import News_company
 
-# 딜레이
-from time import sleep
-
-# 시간측정
-import time
+import os #파일 및 디렉토리 생성
+import pickle #피클형태로 데이터 저장
+from time import sleep # 딜레이
+import time # 시간측정
 
 class WebCrawler:
     # 링크정보를 꼬리만 가지고 있을 때, 모든 정보를 합침.
@@ -21,6 +20,69 @@ class WebCrawler:
         else:
             full_html = part_html.get('href')
         return full_html
+
+    def cr_backupchk(self):
+        loadcontainer = None
+        bkupdir = 'backup'
+        bkupfile = 'backup.pickle'
+        currentPath = os.path.relpath(os.path.dirname(__file__))
+        bkupdirPath = os.path.join(currentPath, bkupdir)
+        bkupfilePath = os.path.join(bkupdirPath, bkupfile)
+        with open(bkupfilePath, 'rb') as f:
+            loadcontainer = pickle.load(f)
+            print(loadcontainer)
+
+    def cr_backup(self, odata, init=False):
+        data = odata
+        container = list() #upper, lower, newslist를 저장할 리스트
+        loadcontainer = None
+        bkupdir = 'backup'
+        bkupfile = 'backup.pickle'
+        currentPath = os.path.relpath(os.path.dirname(__file__))
+        bkupdirPath = os.path.join(currentPath, bkupdir)
+        bkupfilePath = os.path.join(bkupdirPath, bkupfile)
+        # print(os.path.realpath(bkupdirPath))
+
+        #(당연히 최초) 백업디렉토리가 없으면, 디렉토리 생성 파일 생성
+        if os.path.isdir(bkupdirPath) != True:
+            os.mkdir(bkupdirPath)
+            container.append(data)
+            with open(bkupfilePath, 'wb') as f:
+                pickle.dump(container, f)
+        #백업디렉토리가 있으면,
+        else:
+            #upper page의 경우
+            if init == True:
+                container.append(data)
+                #바로 디렉토리에 데이터 생성 (덮어쓰기)
+                with open(bkupfilePath, 'wb') as f:
+                    pickle.dump(container, f)
+            #그 외의 경우 (lower, newslinks)
+            else:
+                try:
+                    #데이터를 load한 뒤
+                    with open(bkupfilePath, 'rb') as f:
+                        loadcontainer = pickle.load(f)
+                        #새로운 데이터를 저장한 뒤
+                        loadcontainer.append(data)
+                    
+                    
+                except FileNotFoundError:
+                    #에러가 생긴 경우 강제로 True로 변경하여
+                    #우선 두번째 파일이라도 백업할 수 있도록 함.
+                    init = True 
+                    print("load 할 파일을 못 찾았습니다. 우선 백업 없이 진행합니다.")
+                
+                finally:
+                    if init == True:
+                        #데이터 저장
+                        with open(bkupfilePath, 'wb') as f:
+                            pickle.dump(data, f)
+                    else:
+                        #다시 저장
+                        with open(bkupfilePath, 'wb') as f:
+                            pickle.dump(loadcontainer, f)
+        print('백업성공')
 
     # 빈 페이지 검사용 함수
     def cr_pagesinspector(self, udump, ehapped = False):
@@ -67,10 +129,12 @@ class WebCrawler:
         return chkDict
     
     # 상단 페이지의 정보 크롤링
-    def cr_upperpages(self, url, headers, lastpage, keyvalues, start_time, startini = 0, endini = 6):
-        # 0. 준비 - 매 페이지의 정보를 저장할 리스트 준비
+    def cr_upperpages(self, target, url, headers, lastpage, keyvalues, start_time, startini = 0, endini = 6):
+        # 0. 준비
+        # 0-1. 매 페이지의 정보를 저장할 리스트 준비
         upper_page_list = []
-        ### 값이 빈 upper page 리스트의 확인을 위해 모든 리스트를 하나의 list로 묶음
+        # 0-2. 값이 없는 upper page의 요소를 확인하기 위해
+        # 모든 요소를 우선 리스트화 하여 접근할 수 있도록 준비
         for i in range(startini, endini):
             prelist = list()
             upper_page_list.append(prelist)
@@ -86,36 +150,89 @@ class WebCrawler:
         # 4. 비추수
         # 5. 날짜
 
-        ##### 크롤링
+        ##### 크롤링 시작
         for i in range(1, int(lastpage)+1):
-            #변수
-            params = {'page': i} #페이지 이동을 위한 파라미터
-            
-            #접속
-            res = requests.get(url, headers=headers, params=params)
-            html = res.text
-            root = lxml.html.fromstring(html)
-            
-            sleep(0.1)
-            
-            for j in range(startini, endini):                
-                for part_html in root.cssselect(keyvalues[j+2]):
-                    if j == 1:
-                        upper_page_list[j].append(self.adjusthtml_pb_tail(part_html, keyvalues[1]))
-                    else:
-                        upper_page_list[j].append(part_html.text_content())
+            # 파라미터
+            params = {} #페이지 이동을 위한 파라미터
+            if target == 'clien':
+                pass # 아래의 주석을 수정하여 원하는대로 파라미터를 수정할 수 있음.
+                # params = {'po' : i-1} #0페이지부터 시작할 수 있도록 i-1
+            else:
+                params = {'page': i}
 
-            print('기본정보 수집중 : 현재페이지 %s , 소요시간 %s 초' % (i, (round(time.time() - start_time,2))))
+            # 변수
+            errorpass = False #에러발생 확인용 변수. 기본적으로 False
+
+            try:
+                #접속
+                res = requests.get(url, headers=headers, params=params)
+                html = res.text
+                root = lxml.html.fromstring(html)
+                
+                sleep(0.1)
+                       
+            except ConnectionResetError as e:
+                errorpass = True
+                print('%s에서 에러 발생'% 'ConnectionResetError')
+                print('%s 오류 다음 페이지에서 재접속' % e)
+
+            except requests.ConnectionError as e:
+                errorpass = True
+                print('%s에서 에러 발생'% 'requests.ConnectionError')
+                print('%s 오류 다음 페이지에서 재접속' % e)
+
+            except requests.exceptions.ConnectionError as e:
+                errorpass = True
+                print('%s에서 에러 발생'% 'requests.exceptions.ConnectionError')
+                print('%s 오류 다음 페이지에서 재접속' % e)
+
+                #톰캣서버를 활성화 시킨다음에 서버에 접속시키면서 강제로 에러를 발생시켜
+                #connectionerror를 누르면 해결이 되는지 확인.
+                
+                #여기에 재접속 코드 삽입. => 적용취소
+
+            except requests.exceptions.ChunkedEncodingError as e:
+                errorpass = True
+                print('%s에서 에러 발생'% 'requests.exceptions.ChunkedEncodingError')
+                print('%s 오류 다음 페이지에서 재접속' % e)
+                            
+
+            except etree.ParserError as e:
+                errorpass = True
+                print('%s 오류로 다음 페이지에서 재접속' % e)
+                # 내용이 비어 있다면 채우고 각 게시글의 내용, 링크, 댓글 등을 딕셔너리에 저장
+                # 해당 페이지의 정보를 모두 blank 채우고 다음페이지 호출
+                
+            finally:
+                # 만일 에러가났다면,
+                if errorpass == True:
+                    print('오류가 일어난 페이지의 "fillblanks" 처리')
+                    #CSS에 등록된 upper page의 개수만큼 loop를 돌며 빈칸으로 넣어줌.
+                    for j in range(startini, endini):
+                        upper_page_list[j].append('')
+                # 에러가 나지 않았다면,
+                else:
+                    # CSS에 등록된 upper page의 수만큼 loop를 돌며 내용을 넣음.
+                    for j in range(startini, endini):                
+                        for part_html in root.cssselect(keyvalues[j+2]):
+                            if j == 1:
+                                upper_page_list[j].append(self.adjusthtml_pb_tail(part_html, keyvalues[1]))
+                            else:
+                                upper_page_list[j].append(part_html.text_content())
+
+                print('기본정보 수집중 : 현재페이지 %s , 소요시간 %s 초' % (i, (round(time.time() - start_time,2))))
+ 
         
         ##### 크롤링 검사 => 빈 칸은 fillblinks를 채움
         list_completed_chk = self.cr_pagesinspector(upper_page_list).values()
-        
         print('총 수집한 링크 수 : ', list(list_completed_chk)[0]) #정보
+        
+        self.cr_backup(upper_page_list, True) #상단페이지 백업
 
         return list(list_completed_chk)[1]
     
     # 하단 페이지의 정보 크롤링
-    def cr_lowerpages(self, headers, upper_page_list, keykeys, keyvalues, startini=6, endini=12):
+    def cr_lowerpages(self, target, headers, upper_page_list, keykeys, keyvalues, startini=6, endini=12):
         # lower page - 하단 페이지 실행
         # 수집한 링크에 접속하여 아래의 정보를 저장.
 
@@ -147,6 +264,13 @@ class WebCrawler:
                 inner_html = inner_res.text
                 inner_root = lxml.html.fromstring(inner_html)
 
+                # print(inner_html)
+                # print(inner_res.status_code, inner_res.encoding, inner_res.headers['content-type'])
+                
+
+                # with open('check.txt', 'w') as f:
+                #     f.write(anj)
+
                 sleep(0.05)
 
                 # ini 파일에 입력한 CSS tag중 lower page에 해당하는 행 번호를 가져와
@@ -154,8 +278,10 @@ class WebCrawler:
                     tmpvalue = None # 리턴할 변수를 하나로 줄이기 위해 None으로 선언
                     tmpstr = ''
                     tmplist = []
+                    selected_ir = inner_root.cssselect(keyvalues[j+2])
+
                     # 해당 행(예를 들어 댓글)에 따른 번호를 넣어준다.
-                    for part_html in inner_root.cssselect(keyvalues[j+2]):
+                    for part_html in selected_ir:
                         if j+2 == 9:
                             # 특이사항 : a태그로 link를 불러왔으나, 그림파일 등 a 태크를 사용하는 경우 blank 저장
                             if part_html.get('href') is None:
@@ -163,12 +289,12 @@ class WebCrawler:
                             tmplist.append(part_html.get('href')) #내부링크
                         else:
                             #게시글이나 날짜 등은 게시물 내에서 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
-                            if isinstance(part_html, list) == False:
+                            if len(selected_ir) < 2:
                                 tmpstr = part_html.text_content()
                             # 12.22 성목 추가
                             # 댓글은 여러개 있을 가능성이 많기 때문에 반드시 리스트로 저장(그래야 전처리 및 분석 쉬움)
-                            elif j+2 == 10: 
-                                tmplist.append(part_html.text_content())
+                            # elif j+2 == 10: 
+                            #     tmplist.append(part_html.text_content())
                             else:
                                 tmplist.append(part_html.text_content())
                     
@@ -181,9 +307,24 @@ class WebCrawler:
                     # 한 행(댓글 등)이 종료되면, 개별 항목마다 검사하여 fillblanks를 채워준다.
                     Dict_completed_chk = self.cr_pagesinspector(tmpvalue).values()
                     content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
-                
-            except ConnectionError as e:
+            
+            # except requests as e:
+            #     errorpass = True
+            #     print('%s 오류 다음 페이지에서 재접속' % e)
+
+            except ConnectionResetError as e:
                 errorpass = True
+                print('%s에서 에러 발생'% 'ConnectionResetError')
+                print('%s 오류 다음 페이지에서 재접속' % e)
+
+            except requests.ConnectionError as e:
+                errorpass = True
+                print('%s에서 에러 발생'% 'requests.ConnectionError')
+                print('%s 오류 다음 페이지에서 재접속' % e)
+
+            except requests.exceptions.ConnectionError as e:
+                errorpass = True
+                print('%s에서 에러 발생'% 'requests.exceptions.ConnectionError')
                 print('%s 오류 다음 페이지에서 재접속' % e)
 
                 #톰캣서버를 활성화 시킨다음에 서버에 접속시키면서 강제로 에러를 발생시켜
@@ -191,8 +332,10 @@ class WebCrawler:
                 
                 #여기에 재접속 코드 삽입. => 적용취소
 
-            # except ConnectionResetError as e:
-            #     pass
+            except requests.exceptions.ChunkedEncodingError as e:
+                errorpass = True
+                print('%s에서 에러 발생'% 'requests.exceptions.ChunkedEncodingError')
+                print('%s 오류 다음 페이지에서 재접속' % e)
                             
 
             except etree.ParserError as e:
@@ -213,20 +356,15 @@ class WebCrawler:
                 
                 # print('빈 셀을 채운 개수 : ', list(Dict_completed_chk)[0])
 
-            # 이전 코드(크롤링 하나 할 때 같이 함)
-            # content = list(content_dict.values())
-
-            # news_company = news.add_news_company(content[1], innerlink)
-            # content_dict['news_company'] = news_company
-            
             #list에 모든 dictionary type 저장.
             contents_part_list.append(content_dict)
             count_cr += 1
-            
+        
+        self.cr_backup(contents_part_list) #하단페이지 백업
         return contents_part_list
 
     # 페이지를 설정할 수 있게 옵션 선택
-    def crawlingposts(self, lastpage, cvalues):
+    def crawlingposts(self, target, lastpage, cvalues):
         ### 크롤링 시간측정 시작 ####
         start_time = time.time()
         u_time = None
@@ -242,13 +380,13 @@ class WebCrawler:
 
         #################################
         # 1. upper page - 상단 페이지 실행
-        upper_page_list = self.cr_upperpages(url, headers, lastpage, keyvalues, start_time)
+        upper_page_list = self.cr_upperpages(target, url, headers, lastpage, keyvalues, start_time)
         u_time = time.time()
         print('It takes %s seconds completing the upper page crawling and the uploading' % (round(u_time - start_time,2)))
         #print(upper_page_list)
         #################################
         # 2. lower page - 하단 페이지 실행
-        contents_part_list = self.cr_lowerpages(headers, upper_page_list, keykeys, keyvalues)
+        contents_part_list = self.cr_lowerpages(target, headers, upper_page_list, keykeys, keyvalues)
         l_time = time.time()
         print('It takes %s seconds completing the lower page crawling and the uploading' % (round(l_time - u_time,2)))
         sleep(2)
@@ -267,6 +405,8 @@ class WebCrawler:
             news_company = news.add_news_company(links_in_content, board_link)
             contents_part_list[i]['news_company'] = news_company
             #print(contents_part_list[i])
+
+        self.cr_backup(contents_part_list) #뉴스백업
         print('It takes %s seconds completing the news info crawling and the uploading' % (round(time.time() - l_time,2)))
 
         ### 크롤링 시간측정 종료 ###

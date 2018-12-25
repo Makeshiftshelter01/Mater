@@ -26,5 +26,5 @@ class Crawling:
         
         ##### 실행 및 결과 호출
         wc = WebCrawler() #웹 크롤러 기능 활성화
-        result = wc.crawlingposts(lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
+        result = wc.crawlingposts(target, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
         return result

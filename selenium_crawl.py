@@ -150,7 +150,7 @@ class selenium_WebCrawler:
         else:
             options = webdriver.FirefoxOptions()
             options.add_argument('headless')
-            wd = webdriver.Firefox(options=options, executable_path=r'/home/tester/geckodriver')
+            wd = webdriver.Firefox(options=options, executable_path=r'/home/centos/selenium_test/geckodriver')
 
 
 

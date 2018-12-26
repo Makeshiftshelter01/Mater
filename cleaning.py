@@ -71,7 +71,18 @@ class cleaner:
                 cleaned =cleaned.lstrip()
                 toDatetype = datetime.strptime(cleaned, '%Y-%m-%d %H%M%S')
                 idate.append(toDatetype)
-                    
+
+        #### clien 시간    #### collection 이름 바꾸어줄 것!!!
+        elif self.feature == gd.idate and self.collection == 'clienforcleaning':
+            for i in range(len(gd.idate)):
+                rawdata = gd.idate[i]
+                cleaned =re.sub('[\t\r\n\xa0]*','', rawdata)
+                cleaned =re.sub('수정일 : 2018-06-20 16:57:03','', cleaned)
+                cleaned =cleaned.lstrip()
+                cleaned =cleaned[:19]
+                toDatetype = datetime.strptime(cleaned, '%Y-%m-%d %H:%M:%S')
+                idate.append(toDatetype)
+                                    
         #### ruriweb 시간  #### collection 이름 바꾸어줄 것!!!
         elif self.feature == gd.idate and self.collection == 'ruriforcleaning':
             for i in range(len(gd.idate)):

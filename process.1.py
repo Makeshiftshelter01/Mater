@@ -2,7 +2,7 @@ from ruri_dao import CrwalingDAO
 from get_element import getElement
 cd = CrwalingDAO()
 
-result = cd.select('ilbeforcleaning')
+result = cd.select('clienforcleaning')
 # 원하는 콜렉션에서 데이터 가져오기 
 
 gd = getElement(result)
@@ -44,13 +44,21 @@ from datetime import datetime
 idate = []
 creplies =[]
 
-# for i in range(5,10):          
-#     rawdata = gd.idate[i]
-#     cleaned =re.sub('[\t。\r\n\]*','', rawdata)
-#     cleaned =re.sub('[작성일:]','', cleaned)
-#     cleaned =cleaned.lstrip()
-#     toDatetype = datetime.strptime(cleaned, '%Y-%m-%d %H%M%S')
-#     idate.append(toDatetype)
-# print(len(idate))
-# print(idate)
+#for i in range(5):   
+rawdata   = "\n\t\t\t\t\t\t\t 2017-05-07 02:00:28\n\t\t\t\t\t\t\t \n\t\t\t\t\t\t\t\t"    
+#rawdata = gd.idate[i]
+cleaned =re.sub('[\t\r\n\xa0]*','', rawdata)
+cleaned =re.sub('수정일 : 2018-06-20 16:57:03','', cleaned)
+cleaned =cleaned.lstrip()
+cleaned =cleaned[:19]
+toDatetype = datetime.strptime(cleaned, '%Y-%m-%d %H:%M:%S')
+idate.append(toDatetype)
+
+
+
+print(len(idate))
+print(idate)
+print(cleaned)
+print(type(cleaned))
+print(type(idate))
 

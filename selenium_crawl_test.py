@@ -246,7 +246,7 @@ class selenium_WebCrawler:
                 except:
                     print('timeout!',innerlink,'로 재접속')
                     print('브라우져 닫음')
-                    wd.close()
+                    wd.quit()
 
                     host = ""  # linux구분
                     if platform.system() != "Linux":
@@ -269,7 +269,7 @@ class selenium_WebCrawler:
                 
                     oksign = True
     
-        wd.close()
+        wd.quit()
         print('긁기 완료, 브라우져 닫음')
         return contents_part_list
 

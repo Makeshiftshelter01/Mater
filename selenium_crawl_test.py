@@ -121,7 +121,7 @@ class selenium_WebCrawler:
                 else:
                     upper_page_list_2[j].append(part_html.text_content())
 
-        print('기본정보 수집중 : 현재페이지 %s , 소요시간 %s 초' % (i, (round(time.time() - start_time, 2))))
+        print('기본정보 수집중 : 현재페이지 %s , 소요시간 %s 초' % (lastpage, (round(time.time() - start_time, 2))))
         
         list_completed_chk = self.cr_pagesinspector(upper_page_list_2).values()
         #print(list(list_completed_chk)[1])

@@ -9,8 +9,8 @@ from ruri_config import Config
 from ruri_crawler import WebCrawler
 
 #셀레니움 크롤링
-from selenium_crawl import selenium_WebCrawler
-
+#from selenium_crawl import selenium_WebCrawler
+from selenium_crawl_test import selenium_WebCrawler
 # 크롤링
 class Crawling:
     # 기본값 호출

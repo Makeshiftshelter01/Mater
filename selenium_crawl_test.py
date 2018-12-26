@@ -334,8 +334,12 @@ class selenium_WebCrawler:
                 contents_part_list[i]['news_company'] = news_company
                 # print(contents_part_list[i])
             print(dummy_page, '파악 완료, insert 준비 중')
-            return (upper_page_list, contents_part_list)
-            
+            cr = []
+            cr.append(upper_page_list)
+            cr.append(contents_part_list)
+            cd = CrwalingDAO()
+            cd.insert(cr)
+            print('insert 완!!!')
             print('It takes %s seconds completing the news info crawling and the uploading' % (
                 round(time.time() - l_time, 2)))
 

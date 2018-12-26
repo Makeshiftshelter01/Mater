@@ -86,13 +86,9 @@ class selenium_WebCrawler:
         upper_page_list = []
         currentPath = os.path.relpath(os.path.dirname(__file__))
         ### 값이 빈 upper page 리스트의 확인을 위해 모든 리스트를 하나의 list로 묶음
-        for i in range(startini, endini):
-            prelist = list()
-            upper_page_list.append(prelist)
-
-        #################################
-        # 1. upper page - 상단 페이지 실행
-        # 링크에 접속하여 아래의 정보를 저장.
+        # for i in range(startini, endini):
+        #     prelist = list()
+        #     upper_page_list.append(prelist)
 
         # 0. 번호 - 특이사항 : cssselect를 이용할 때 :not(.클래스이름)을 사용하여 notice class 제거.
         # 1. 링크 - 특이사항 : 꼬리만 추출되는 경우 감안
@@ -102,36 +98,36 @@ class selenium_WebCrawler:
         # 5. 날짜
 
         ##### 크롤링
-        for i in range(1, int(lastpage) + 1):
-            upper_page_list_2 = []
-            for ini in range(startini, endini):
-                prelist = list()
-                upper_page_list_2.append(prelist)
+        # for i in range(1, int(lastpage) + 1):
+        upper_page_list_2 = []
+        for ini in range(startini, endini):
+            prelist = list()
+            upper_page_list_2.append(prelist)
 
-            # 변수
-            params = {pagetype: i}  # 페이지 이동을 위한 파라미터
+        # 변수
+        params = {pagetype: lastpage}  # 페이지 이동을 위한 파라미터
 
-            # 접속
-            res = requests.get(url, headers=headers, params=params)
-            html = res.text
-            root = lxml.html.fromstring(html)
+        # 접속
+        res = requests.get(url, headers=headers, params=params)
+        html = res.text
+        root = lxml.html.fromstring(html)
 
-            sleep(0.1)
+        sleep(0.1)
 
-            for j in range(startini, endini):
-                for part_html in root.cssselect(keyvalues[j + 2]):
-                    if j == 1:
-                        upper_page_list_2[j].append(self.adjusthtml_pb_tail(part_html, keyvalues[1]))
-                    else:
-                        upper_page_list_2[j].append(part_html.text_content())
+        for j in range(startini, endini):
+            for part_html in root.cssselect(keyvalues[j + 2]):
+                if j == 1:
+                    upper_page_list_2[j].append(self.adjusthtml_pb_tail(part_html, keyvalues[1]))
+                else:
+                    upper_page_list_2[j].append(part_html.text_content())
 
-            print('기본정보 수집중 : 현재페이지 %s , 소요시간 %s 초' % (i, (round(time.time() - start_time, 2))))
-            
-            list_completed_chk = self.cr_pagesinspector(upper_page_list_2).values()
-            #print(list(list_completed_chk)[1])
-            #print('-------------------------------------------------')
-            with open(currentPath + 'dump.pickle', 'wb') as f:
-                pickle.dump(list(list_completed_chk)[1], f)
+        print('기본정보 수집중 : 현재페이지 %s , 소요시간 %s 초' % (i, (round(time.time() - start_time, 2))))
+        
+        list_completed_chk = self.cr_pagesinspector(upper_page_list_2).values()
+        #print(list(list_completed_chk)[1])
+        #print('-------------------------------------------------')
+        with open(currentPath + 'dump.pickle', 'wb') as f:
+            pickle.dump(list(list_completed_chk)[1], f)
 
         print('저장완료')    
         # ##### 크롤링 검사 => 빈 칸은 fillblinks를 채움

@@ -288,6 +288,14 @@ class WebCrawler:
                                 continue
                             tmplist.append(part_html.get('href')) #내부링크
                         else:
+                            # 12.24 성목 수정
+                            # 모든 part_html은 값이 여러개라도 개별적으로 넘어오기 때문에
+                            # isinstance list가 False일 수 밖에 없음
+                            # 그래서 댓글이 리스트로 저장 안되는 상황 발생해서 수정
+                            # 현재는 순서를 바꿔놓았는데 판단해서 isinstance는 지워도 될 듯 함
+                            if j+2 == 10: 
+                                tmplist.append(part_html.text_content())
+
                             #게시글이나 날짜 등은 게시물 내에서 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
                             if len(selected_ir) < 2:
                                 tmpstr = part_html.text_content()

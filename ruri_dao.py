@@ -31,7 +31,7 @@ class CrwalingDAO:
             mongoDict[keys[j+2]] = upper[j][k]
         
         # 컨텐츠 추가
-        mongoDict['content'] = lower[k]
+        mongoDict['content'] = lower
 
         doc_id = conn.m_collection.insert_one(mongoDict).inserted_id
         print('no.', k+1, 'inserted id in mongodb : ', doc_id)
@@ -93,4 +93,38 @@ class CrwalingDAO:
             result.append(l)
         return result
 
-    
+
+    def find_empty(self, collection):
+        config = Config()
+        data = config.get_coll_dict(collection)
+       
+        host = "" # linux구분
+        if platform.system() != "Linux":
+            host = 'host'
+        else:
+            host = 'lhost'
+        cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
+        cnct.MongoDB()
+        #cursor = cnct.m_collection.find({'content' : {'$size' : 0}}).limit(20)
+        cursor = cnct.m_collection.find({'content' : {}}).limit(20)
+        
+        result = []
+        for l in cursor:
+            result.append(l)
+        return result
+
+    def update_one(self, result, collection, ids):
+        config = Config()
+        data = config.get_coll_dict(collection)
+        print(result)
+        host = "" # linux구분
+        if platform.system() != "Linux":
+            host = 'host'
+        else:
+            host = 'lhost'
+        cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
+        cnct.MongoDB()
+
+        for i in range(len(ids)):
+            cursor = cnct.m_collection.update_one({'_id': ids[i]}, {'$set': {'content': result[i]}})
+            print('Updated', ids[i])

@@ -8,23 +8,26 @@ import lxml.html
 from lxml import etree
 import cssselect
 import collections
-from news_company import News_company
-from ruri_dao import CrwalingDAO
 # 딜레이
 from time import sleep
-
 # 시간측정
 import time
-
 # 셀레니움
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-
 # os 확인용
 import platform
 
 import pickle
 import os
+
+# 데이터 가져오기
+from ruri_dao import CrwalingDAO
+from get_half_element import getElement
+
+#언론사 구분
+from news_company import News_company
+
 class selenium_WebCrawler:
     # 링크정보를 꼬리만 가지고 있을 때, 모든 정보를 합침.
     def adjusthtml_pb_tail(self, part_html, head=""):
@@ -139,7 +142,7 @@ class selenium_WebCrawler:
 
     # 하단 페이지의 정보 크롤링
 
-    def cr_lowerpages(self, headers, upper_page_list, keykeys, keyvalues, startini=6, endini=12):
+    def cr_lowerpages(self, board_links, keykeys, keyvalues, startini=6, endini=12):
         # lower page - 하단 페이지 실행
         # 수집한 링크에 접속하여 아래의 정보를 저장.
 
@@ -179,9 +182,9 @@ class selenium_WebCrawler:
         scnt = 0
         
         # 수집한 내부링크(게시판)의 수만큼 loop를 돌며 접속
-        for innerlink in upper_page_list[1]:
+        for innerlink in board_links:
             oksign = True
-            print('크롤링 진행사항 :', count_cr, ' / ', len(upper_page_list[1]))
+            print('크롤링 진행사항 :', count_cr, ' / ', len(board_links))
             
             while oksign == True:  
                 # 변수
@@ -274,7 +277,7 @@ class selenium_WebCrawler:
         return contents_part_list
 
     # 페이지를 설정할 수 있게 옵션 선택
-    def selenium_crawlingposts(self, lastpage, cvalues, pagetype):  # 역시 여기서도 pagetype 설정 추가
+    def selenium_upperpage_only(self, lastpage, cvalues, pagetype):  # 역시 여기서도 pagetype 설정 추가
         ### 크롤링 시간측정 시작 ####
         start_time = time.time()
         u_time = None
@@ -303,44 +306,77 @@ class selenium_WebCrawler:
             currentPath = os.path.relpath(os.path.dirname(__file__))
             with open(currentPath + 'dump.pickle', 'rb') as f:
                 upper_page_list = pickle.load(f)
-              
 
-            ################################
-            #2. lower page - 하단 페이지 실행
-            contents_part_list = self.cr_lowerpages(headers, upper_page_list, keykeys, keyvalues)
-            l_time = time.time()
-            print('It takes %s seconds completing the lower page crawling and the uploading' % (round(l_time - u_time, 2)))
-        
-            #################################
-            # 3. 언론사 정보 가져오기 => contents_part_list를 호출하여 다시 contents_part_list를 return
-            # print(contents_part_list)
+            empty_dict = {}
+            #for i in range(len(upper_page_list[0])):
+            #    empty_list.append([])
 
-            # 모든 크롤링이 끝나고 contents_part_list에 news_company 추가
-
-            print('News Company Analyzing...')
-            for i in range(len(contents_part_list)):
-                board_link = upper_page_list[1][i]  # 게시물 자체 링크(혹시나 그 링크로 다시 돌아가야 될 때 대비(뉴스 컴퍼니 함수에선 현재 비활성화))
-                # print(board_link)
-                
-                #print(contents_part_list)
-                
-                links_in_content = contents_part_list[i]['clinks']  # 게시물 내에
-                
-                news_company = news.add_news_company(links_in_content, board_link)
-                contents_part_list[i]['news_company'] = news_company
-                # print(contents_part_list[i])
-            print(dummy_page, '파악 완료, insert 준비 중')
             cr = []
             cr.append(upper_page_list)
-            cr.append(contents_part_list)
+            cr.append(empty_dict)
             cd = CrwalingDAO()
             cd.insert(cr)
             print('insert 완!!!')
-            print('It takes %s seconds completing the news info crawling and the uploading' % (
-                round(time.time() - l_time, 2)))
 
-
-            
             ### 크롤링 시간측정 종료 ###
             print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time, 2)))
+    
+    
+    def selenium_lowerpage_only(self, collection, cvalues):
+        start_time = time.time()
+        u_time = None
+        l_time = None
+
+        ### 변수설정
+        keykeys = list(cvalues.keys())
+        keyvalues = list(cvalues.values())
+        news = News_company()
+        cd = CrwalingDAO()
+        
+        empty = False
+        while empty == False:
+
+            result = cd.find_empty(collection)
+            chkempty = len(result)
+
+            if chkempty == 0:
+                empty = True
+            else:   
+                # 원하는 콜렉션에서 데이터 가져오기 
+                board_links = []
+
+                for i in range(len(result)):
+                    board_links.append(result[i]['clink'])
+
+                ids = []
+
+                for i in range(len(result)):
+                    ids.append(result[i]['_id'])
+
+                print(board_links)
+                # ################################
+                # #2. lower page - 하단 페이지 실행
+                contents_part_list = self.cr_lowerpages(board_links, keykeys, keyvalues)
+                l_time = time.time()
+
+                # #################################
+                # # 3. 언론사 정보 가져오기 => contents_part_list를 호출하여 다시 contents_part_list를 return
+                # # print(contents_part_list)
+
+                # # 모든 크롤링이 끝나고 contents_part_list에 news_company 추가
+                #print(contents_part_list)
+
+                print('News Company Analyzing...')
+                for i in range(len(contents_part_list)):
+                
+                    links_in_content = contents_part_list[i]['clinks']  # 게시물 내에
+                    
+                    news_company = news.add_news_company(links_in_content)
+                    contents_part_list[i]['news_company'] = news_company
+
+                #print(contents_part_list)    
             
+                cd = CrwalingDAO()
+                cd.update_one(contents_part_list, collection, ids)
+                print('insert 완!!!')
+        print('It takes %s seconds completing the news info crawling and the uploading' % (round(time.time() - l_time, 2)))

@@ -15,7 +15,7 @@ from time import sleep
 # 시간측정
 import time
 class News_company: 
-    def add_news_company(self, link, innerlink):
+    def add_news_company(self, link, innerlink='none'):
         if link == 'fillblanks':
             news_company = 'fillblanks'
         elif link != 'fillblanks':

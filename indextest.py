@@ -3,14 +3,15 @@ import requests
 import lxml.html
 import cssselect
 import collections
-
+from lxml import etree
 
 link = ['https://news.naver.com/main/read.nhn?oid=421&sid1=102&aid=0003754788&mid=shm&mode=LSD&nh=20181224212229',
 'https://news.naver.com/main/read.nhn?mode=LSD&mid=shm&sid1=101&oid=001&aid=0010543742',
 'https://m.news.naver.com/read.nhn?oid=001&aid=0010543762&sid1=104&mode=LSD',
 'https://m.sports.naver.com/basketball/news/read.nhn?oid=117&aid=0003153272',
 'https://sports.news.naver.com/wkbl/news/read.nhn?oid=117&aid=0003153272', 
-'https://sports.news.naver.com/kfootball/news/read.nhn?oid=450&aid=0000046104']
+'https://sports.news.naver.com/kfootball/news/read.nhn?oid=450&aid=0000046104', 
+'https://sports.news.naver.casf/kfoosfsasfall/news/read.nasn?oid=450&aid=0000046104']
 
 news_company = []
 # 주요 언론사 사전
@@ -57,55 +58,120 @@ for j in range(len(link)): # 리스트 형태 안의 링크의 갯수만큼 반�
             temp = news_dict_keys[w]
             
     if (daum in link[j]): # 뉴스링크(문자열)에 'daum' 키워드가 있다면.
-        res = requests.get(link[j], headers=headers) # 그 링크로 접속
-        html = res.text
-        root = lxml.html.fromstring(html)
-        print('daum 뉴스', link[j])
-
         try:
-            selector = root.cssselect('div em a img')[0]
-            alt = selector.get('alt') # 뉴스언론사 이름 가져오기(예: '중앙일보', '연합뉴스', '한겨례' 형태로 가져옴)
-            print(root.cssselect('div em a img'))
-            if alt in news_dict_keys: #선정한 언론사 목록(key)에 alt값이 있다면(메이저 언론사)
-                temp = alt  # 언론사 목록에 이름 그대로 추가
-            else: # 선정한 언론사 목록에 alt값이 없다면(마이너 언론사)
-                temp = '기타 언론사'
-            print(temp)
-        except: 
-            temp = 'Selector Not Found'
-            print(temp)
+            errorpass = False
+            res = requests.get(link[j], headers=headers) # 그 링크로 접속
+            html = res.text
+            root = lxml.html.fromstring(html)
+            print('daum 뉴스', link[j])
+
+        except ConnectionResetError as e:
+            errorpass = True
+            print('%s에서 에러 발생'% 'ConnectionResetError')
+            print('%s 오류 다음 페이지에서 재접속' % e)
+
+        except requests.ConnectionError as e:
+            errorpass = True
+            print('%s에서 에러 발생'% 'requests.ConnectionError')
+            print('%s 오류 다음 페이지에서 재접속' % e)
+
+        except requests.exceptions.ConnectionError as e:
+            errorpass = True
+            print('%s에서 에러 발생'% 'requests.exceptions.ConnectionError')
+            print('%s 오류 다음 페이지에서 재접속' % e)
+
+        except requests.exceptions.ChunkedEncodingError as e:
+            errorpass = True
+            print('%s에서 에러 발생'% 'requests.exceptions.ChunkedEncodingError')
+            print('%s 오류 다음 페이지에서 재접속' % e)
+                        
+
+        except etree.ParserError as e:
+            errorpass = True
+            print('%s 오류로 다음 페이지에서 재접속' % e)
+            # 내용이 비어 있다면 채우고 각 게시글의 내용, 링크, 댓글 등을 딕셔너리에 저장
+            # 해당 페이지의 정보를 모두 blank 채우고 다음페이지 호출
             
-    if (naver in link[j]): # 이번엔 네이버
-        res = requests.get(link[j], headers=headers) 
-        html = res.text
-        root = lxml.html.fromstring(html)
-        print('naver 뉴스', link[j])
-        # 네이버는 모바일과 데스크톱의 선택자가 전혀 다르다..
-        # 주소에서 m.이 있을 시 모바일
-        try:
-            if 'm.news' in link[j]:
-                selector = root.cssselect('div a img')[0] # 모바일
-                print(root.cssselect('div a img'))
+        finally:
+            # 만일 에러가났다면,
+            if errorpass == True:
+                temp = 'Requests 에러'
             else:
-                selector = root.cssselect('td div div a img')[0] # 데스크탑
-                print(root.cssselect('td div div a img'))
-                alt = selector.get('alt') 
+                try:
+                    selector = root.cssselect('div em a img')[0]
+                    alt = selector.get('alt') # 뉴스언론사 이름 가져오기(예: '중앙일보', '연합뉴스', '한겨례' 형태로 가져옴)
+                    if alt in news_dict_keys: #선정한 언론사 목록(key)에 alt값이 있다면(메이저 언론사)
+                        temp = alt  # 언론사 목록에 이름 그대로 추가
+                    else: # 선정한 언론사 목록에 alt값이 없다면(마이너 언론사)
+                        temp = '기타 언론사'
+                    print(temp)
+                except IndexError: 
+                    temp = 'Selector Not Found'
+                    print(temp)
 
-            if alt in news_dict_keys: 
-                temp = alt  
-            else: 
-                temp = '기타 언론사'
-            print(temp)
+    if (naver in link[j]): # 이번엔 네이버
 
-        except:
-            temp = 'out of range'
+        try:
+            errorpass = False
+            res = requests.get(link[j], headers=headers) 
+            html = res.text
+            root = lxml.html.fromstring(html)
+            print('naver 뉴스', link[j])
+            
+        
+        except ConnectionResetError as e:
+            errorpass = True
+            print('%s에서 에러 발생'% 'ConnectionResetError')
+            print('%s 오류 다음 페이지에서 재접속' % e)
 
-    
+        except requests.ConnectionError as e:
+            errorpass = True
+            print('%s에서 에러 발생'% 'requests.ConnectionError')
+            print('%s 오류 다음 페이지에서 재접속' % e)
+
+        except requests.exceptions.ConnectionError as e:
+            errorpass = True
+            print('%s에서 에러 발생'% 'requests.exceptions.ConnectionError')
+            print('%s 오류 다음 페이지에서 재접속' % e)
+
+        except requests.exceptions.ChunkedEncodingError as e:
+            errorpass = True
+            print('%s에서 에러 발생'% 'requests.exceptions.ChunkedEncodingError')
+            print('%s 오류 다음 페이지에서 재접속' % e)
+                        
+
+        except etree.ParserError as e:
+            errorpass = True
+            print('%s 오류로 다음 페이지에서 재접속' % e)
+            # 내용이 비어 있다면 채우고 각 게시글의 내용, 링크, 댓글 등을 딕셔너리에 저장
+            # 해당 페이지의 정보를 모두 blank 채우고 다음페이지 호출
+            
+        finally:
+            # 만일 에러가났다면,
+            if errorpass == True:
+                temp = 'Requests 에러'
+
+            else:
+                    # 네이버는 모바일과 데스크톱의 선택자가 전혀 다르다..
+                # 주소에서 m.이 있을 시 모바일
+                try:
+                    if 'm.news' in link[j]:
+                        selector = root.cssselect('div a img')[0] # 모바일
+                    else:
+                        selector = root.cssselect('td div div a img')[0] # 데스크탑
+                    alt = selector.get('alt') 
+                    if alt in news_dict_keys: 
+                        temp = alt  
+                    else: 
+                        temp = '기타 언론사'
+                    print(temp)
+                except IndexError: 
+                    temp = 'Selector Not Found'
+                    print(temp)
 
     if temp == '뉴스': # news 라는 키워드때문에 '뉴스' 로 걸러지긴 했는데 언론사 리스트에 없다면 기타 언론사 
         temp = '기타 언론사'
-
-
+    print(link[j], temp)
     news_company.append(temp)
 
 print(news_company)

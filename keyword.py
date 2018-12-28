@@ -27,7 +27,7 @@ wd = webdriver.Chrome(executable_path=r'C:\Program Files (x86)\Google\Chrome\App
 
 sleep(0.1)
 # container > div > div.left_article > div > ul > li:nth-child(1) > div > div.fcItem_top.clearfix > div.prg.fcItem_li > p > a
-for i in range(1, int(last) + 1):
+for i in range(1, 5 + 1):
     params = {'page': i}
     res = requests.get(url, headers=headers, params=params)
     html = res.text
@@ -51,11 +51,18 @@ for i in range(1, int(last) + 1):
     for part_html in wd.find_elements_by_css_selector('div.meter-label'):
         met = part_html.text
         meters.append(met)
+    
+    banner = []
+    for part_html in wd.find_elements_by_css_selector('div.checked_by ul li img'):
+        ban = part_html.get_attribute('src')
+        banner.append(ban)
+
 
     for i in range(len(titles)):
         contents = {}
         contents['title'] = titles[i]
         contents['meters'] = meters[i]
+        contents['banner'] = banner[i]
         keyword.append(contents)
 
 

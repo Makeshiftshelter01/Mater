@@ -57,7 +57,7 @@ class News_company:
                 news_dict_values = list(news_dict.values())                   
                 headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
                 naver = 'news.naver' #
-                daum= 'daum' # 그냥 daum으로 쓰면 cafe.daum에서 걸림
+                daum= 'daum' 
                 
                 for j in range(len(link)): # 리스트 형태 안의 링크의 갯수만큼 반복
                     temp = 'Not News' #기본값(아무것도 걸리지 않는 유튜브나 기타 사이트는 이걸로 전달)

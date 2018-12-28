@@ -316,7 +316,8 @@ class selenium_WebCrawler:
             cr.append(empty_dict)
             cd = CrwalingDAO()
             cd.insert(cr)
-            print('insert 완!!!')
+            print('page%d inserted' % (dummy_page))
+            sleep(1)
 
             ### 크롤링 시간측정 종료 ###
             print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time, 2)))
@@ -337,6 +338,65 @@ class selenium_WebCrawler:
         while empty == False:
 
             result = cd.find_empty(collection)
+            chkempty = len(result)
+
+            if chkempty == 0:
+                empty = True
+            else:   
+                # 원하는 콜렉션에서 데이터 가져오기 
+                board_links = []
+
+                for i in range(len(result)):
+                    board_links.append(result[i]['clink'])
+
+                ids = []
+
+                for i in range(len(result)):
+                    ids.append(result[i]['_id'])
+
+                print(board_links)
+                # ################################
+                # #2. lower page - 하단 페이지 실행
+                contents_part_list = self.cr_lowerpages(board_links, keykeys, keyvalues)
+                l_time = time.time()
+
+                # #################################
+                # # 3. 언론사 정보 가져오기 => contents_part_list를 호출하여 다시 contents_part_list를 return
+                # # print(contents_part_list)
+
+                # # 모든 크롤링이 끝나고 contents_part_list에 news_company 추가
+                #print(contents_part_list)
+
+                print('News Company Analyzing...')
+                for i in range(len(contents_part_list)):
+                
+                    links_in_content = contents_part_list[i]['clinks']  # 게시물 내에
+                    
+                    news_company = news.add_news_company(links_in_content)
+                    contents_part_list[i]['news_company'] = news_company
+
+                #print(contents_part_list)    
+            
+                cd = CrwalingDAO()
+                cd.update_one(contents_part_list, collection, ids)
+                print('insert 완!!!')
+        print('It takes %s seconds completing the news info crawling and the uploading' % (round(time.time() - l_time, 2)))
+
+    def selenium_lowerpage_fix(self, collection, cvalues):
+        start_time = time.time()
+        u_time = None
+        l_time = None
+
+        ### 변수설정
+        keykeys = list(cvalues.keys())
+        keyvalues = list(cvalues.values())
+        news = News_company()
+        cd = CrwalingDAO()
+
+        empty = False
+        while empty == False:
+
+            result = cd.find_fillblanks(collection)
             chkempty = len(result)
 
             if chkempty == 0:

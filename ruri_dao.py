@@ -106,12 +106,37 @@ class CrwalingDAO:
         cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
         cnct.MongoDB()
         #cursor = cnct.m_collection.find({'content' : {'$size' : 0}}).limit(20)
-        cursor = cnct.m_collection.find({'content' : {}}).limit(20)
-        
+        cursor = cnct.m_collection.find({'content' : {}}).limit(30)
+        cnct.m_client.close()
         result = []
         for l in cursor:
             result.append(l)
         return result
+
+    def find_fillblanks(self, collection):
+        config = Config()
+        data = config.get_coll_dict(collection)
+       
+        host = "" # linux구분
+        if platform.system() != "Linux":
+            host = 'host'
+        else:
+            host = 'lhost'
+        cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
+        cnct.MongoDB()
+        #cursor = cnct.m_collection.find({'content' : {'$size' : 0}}).limit(20)
+        cursor = cnct.m_collection.find({'$and' : [{'content.ccontent': 'fillblanks'},
+                            {'content.clinks': 'fillblanks'}, 
+                            {'content.creplies': 'fillblanks'}, 
+                            {'content.cthumbupl': 'fillblanks'},
+                            {'content.cthumbdownl': 'fillblanks'}, 
+                            {'content.idate': 'fillblanks'}, 
+                            {'content.news_company': 'fillblanks'}]}).limit(30)
+        cnct.m_client.close()
+        result = []
+        for l in cursor:
+            result.append(l)
+        return result    
 
     def update_one(self, result, collection, ids):
         config = Config()
@@ -128,3 +153,5 @@ class CrwalingDAO:
         for i in range(len(ids)):
             cursor = cnct.m_collection.update_one({'_id': ids[i]}, {'$set': {'content': result[i]}})
             print('Updated', ids[i])
+
+        cnct.m_client.close()

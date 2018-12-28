@@ -50,3 +50,12 @@ class Crawling:
         sw = selenium_WebCrawler() #웹 크롤러 기능 활성화
         sw.selenium_lowerpage_only(coll, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
         #return result
+
+    def selenium_fixerrors(self, coll, target):
+        ##### 세팅 정보
+        ctargetdata = self.setcsstags(target) #크롤링 하기 위한 타겟 사이트의 필수 데이터 호출
+        
+        ##### 실행 및 결과 호출
+        sw = selenium_WebCrawler() #웹 크롤러 기능 활성화
+        sw.selenium_lowerpage_fix(coll, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
+        #return result

@@ -25,6 +25,6 @@ cr = Crawling() #크롤링
 cd = CrwalingDAO() #현재는 mongoDB
 
 
-cr.selenium_upperpage(target='inven',lastpage=1, pagetype='p')
+cr.selenium_upperpage(target='inven',lastpage=1000, pagetype='p')
 # 프로그램 종료 측정 및 결과 출력
 print('It takes %s seconds completing the crawling and the uploading' % (round(time.time() - start_time,2)))

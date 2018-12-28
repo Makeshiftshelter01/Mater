@@ -141,7 +141,7 @@ class CrwalingDAO:
     def update_one(self, result, collection, ids):
         config = Config()
         data = config.get_coll_dict(collection)
-        print(result)
+        #print(result)
         host = "" # linux구분
         if platform.system() != "Linux":
             host = 'host'

@@ -10,7 +10,8 @@ from ruri_crawler import WebCrawler
 
 #셀레니움 크롤링
 #from selenium_crawl import selenium_WebCrawler
-from selenium_crawl_test import selenium_WebCrawler
+# from selenium_crawl_test import selenium_WebCrawler
+
 # 크롤링
 class Crawling:
     # 기본값 호출
@@ -23,21 +24,32 @@ class Crawling:
         return ctargetdata
 
     # 크롤링
-    def crawling(self, target, lastpage):
+    def crawling(self, target, lastpage, nsplit=1):
+        # 변수
+        result = None
+        
         ##### 세팅 정보
         ctargetdata = self.setcsstags(target) #크롤링 하기 위한 타겟 사이트의 필수 데이터 호출
         
         ##### 실행 및 결과 호출
         wc = WebCrawler() #웹 크롤러 기능 활성화
-        result = wc.crawlingposts(target, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
-        return result
-    
-    #셀레니움 크롤링
-    def selenium_crawling(self, target, lastpage, pagetype ='page'):
-        ##### 세팅 정보
-        ctargetdata = self.setcsstags(target) #크롤링 하기 위한 타겟 사이트의 필수 데이터 호출
         
-        ##### 실행 및 결과 호출
-        sw = selenium_WebCrawler() #웹 크롤러 기능 활성화
-        result = sw.selenium_crawlingposts(lastpage, ctargetdata, pagetype) #크롤링 실행 및 결과를 변수에 담음
+        if nsplit == 1:
+            result = wc.crawlingposts(target, nsplit, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
+        elif nsplit > 1:
+            # 크롤링 & insert
+            wc.crawlingpostslittle(target, nsplit, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
+        else:
+            print('잘못 입력')
+            sys.exit()
         return result
+
+    #셀레니움 크롤링
+    # def selenium_crawling(self, target, lastpage, pagetype ='page'):
+    #     ##### 세팅 정보
+    #     ctargetdata = self.setcsstags(target) #크롤링 하기 위한 타겟 사이트의 필수 데이터 호출
+        
+    #     ##### 실행 및 결과 호출
+    #     sw = selenium_WebCrawler() #웹 크롤러 기능 활성화
+    #     result = sw.selenium_crawlingposts(lastpage, ctargetdata, pagetype) #크롤링 실행 및 결과를 변수에 담음
+    #     return result

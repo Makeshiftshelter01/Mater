@@ -49,7 +49,7 @@ start_time = time.time()
 # 크롤링
 cr = Crawling() #크롤링
 cd = CrwalingDAO() #현재는 mongoDB
-cd.insert(cr.crawling('ruriweb', 1)) #저장할 컬렉션은 ini 파일에서 변경해야 함
-
+# cd.insert(cr.crawling('ruriweb', 10)) #사용금지
+cr.crawling('ruriweb', 3, 3)
 # 프로그램 종료 측정 및 결과 출력
 print('It takes %s seconds completing the crawling and the uploading' % (round(time.time() - start_time,2)))

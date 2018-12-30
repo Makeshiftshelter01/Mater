@@ -5,11 +5,14 @@ from lxml import etree
 import cssselect
 import collections
 from news_company import News_company
+from ruri_dao import CrwalingDAO
 
 import os #파일 및 디렉토리 생성
 import pickle #피클형태로 데이터 저장
 from time import sleep # 딜레이
 import time # 시간측정
+
+
 
 class WebCrawler:
     # 링크정보를 꼬리만 가지고 있을 때, 모든 정보를 합침.
@@ -21,6 +24,7 @@ class WebCrawler:
             full_html = part_html.get('href')
         return full_html
 
+    # 백업 확인 (호출)
     def cr_backupchk(self):
         loadcontainer = None
         bkupdir = 'backup'
@@ -28,10 +32,16 @@ class WebCrawler:
         currentPath = os.path.relpath(os.path.dirname(__file__))
         bkupdirPath = os.path.join(currentPath, bkupdir)
         bkupfilePath = os.path.join(bkupdirPath, bkupfile)
-        with open(bkupfilePath, 'rb') as f:
-            loadcontainer = pickle.load(f)
-            print(loadcontainer)
+        if os.path.isdir(bkupdirPath) != True:
+            pass
+        else:
+            if os.path.isfile(bkupfilePath) != True:
+                with open(bkupfilePath, 'rb') as f:
+                    loadcontainer = pickle.load(f)
+                    print(loadcontainer)
+        return loadcontainer
 
+    # 백업 (저장)
     def cr_backup(self, odata, init=False):
         data = odata
         container = list() #upper, lower, newslist를 저장할 리스트
@@ -128,11 +138,43 @@ class WebCrawler:
         chkDict = {'number': elements, 'dump' : dump}
         return chkDict
     
-    # 상단 페이지의 정보 크롤링
-    def cr_upperpages(self, target, url, headers, lastpage, keyvalues, start_time, startini = 0, endini = 6):
-        # 0. 준비
-        # 0-1. 매 페이지의 정보를 저장할 리스트 준비
-        upper_page_list = []
+    # 페이지 분할 후 분할 구간을 return하는 함수
+    def splitpages(self, endpage, nsplit):
+        # 상단페이지에서 나온 링크를 지정한 수로 쪼개 페이지의 각 구간 값을 구하고
+        indexdiv = list()
+        nlistquotient = int(endpage/nsplit) #구간 값
+        nlistremainder = int(endpage%nsplit) #구간 값에 못 미친 나머지
+        # print('페이지의 몫과 나머지 : ', nlistquotient, nlistremainder)
+        
+        # 몫과 나머지에 따른 구간 보정
+        r = nsplit
+        # 나머지가 0이 아니면 나머지를 적용하여 구간에 1을 더함.
+        if nlistremainder != 0:
+            r = nsplit+1
+
+        # 구간을 설정.
+        # 예) 구간을 3으로 쪼개면, loop로 돌려야 할 구간은 총 4개
+        for i in range(r):
+            nfrom = i*nlistquotient
+            nto = None
+            # 마지막 구간이 아니면,
+            if i is not nsplit:
+                nto = (i+1)*nlistquotient # 일반 구간인 경우
+            else:
+                nto =  nfrom + nlistremainder # 마지막 구간인 경우
+
+            tmp = [nfrom, nto]
+            indexdiv.append(tmp)
+         
+            print('구간 번호 : %d, 시작 : %d, 끝 : %d, 서치할 페이지 구간 : %d / %d' % (i+1, nfrom, nto-1, nto, endpage))
+        return indexdiv
+
+    # 상단 페이지의 정보 크롤링 함수
+    def cr_upperpages(self, target, url, headers, splitstartpage, splitlastpage, lastpage, keyvalues, start_time, startini = 0, endini = 6):
+        ##### 준비
+        first_page = 0 # 첫 번째 페이지의 수를 저장할 변수
+        backupinfo = [] #backup을 위한 리스트
+        upper_page_list = [] # 매 페이지의 정보를 저장할 리스트 준비
         # 0-2. 값이 없는 upper page의 요소를 확인하기 위해
         # 모든 요소를 우선 리스트화 하여 접근할 수 있도록 준비
         for i in range(startini, endini):
@@ -151,11 +193,13 @@ class WebCrawler:
         # 5. 날짜
 
         ##### 크롤링 시작
-        for i in range(1, int(lastpage)+1):
+        #1페이지에서부터 시작해야 하기 때문에 시작과 종료페이지에 각각 1을 더한다.
+        for i in range(int(splitstartpage)+1, int(splitlastpage)+1):
             # 파라미터
             params = {} #페이지 이동을 위한 파라미터
             if target == 'clien':
-                pass # 아래의 주석을 수정하여 원하는대로 파라미터를 수정할 수 있음.
+                params = {'page': i}
+                # pass # 아래의 주석을 수정하여 원하는대로 파라미터를 수정할 수 있음.
                 # params = {'po' : i-1} #0페이지부터 시작할 수 있도록 i-1
             else:
                 params = {'page': i}
@@ -220,18 +264,32 @@ class WebCrawler:
                             else:
                                 upper_page_list[j].append(part_html.text_content())
 
-                print('기본정보 수집중 : 현재페이지 %s , 소요시간 %s 초' % (i, (round(time.time() - start_time,2))))
+                print('기본정보 수집중 : 현재페이지 %s / 마지막페이지 %s , 소요시간 %s 초' % (i, lastpage, (round(time.time() - start_time,2))))
  
         
         ##### 크롤링 검사 => 빈 칸은 fillblinks를 채움
         list_completed_chk = self.cr_pagesinspector(upper_page_list).values()
         print('총 수집한 링크 수 : ', list(list_completed_chk)[0]) #정보
         
-        self.cr_backup(upper_page_list, True) #상단페이지 백업
+        ##### 크롤링 백업
+        # 상단에서 백업에 보낼 데이터 리스트에는 상단 페이지를 크롤링하여 얻은
+        # 첫 번째 페이지의 총 수, 최종 인덱스 숫자, 완료여부를 리턴하고 피클에 저장
+        # backupinfo = [first_page, list(list_completed_chk)[0], True]
 
+        # # 백업이 있으면,
+        # if backuploaded != False:
+        #     # 모두 완료되었으면 이미 완성된 크롤링이 남긴 백업으로 파악하고 (backuploaded = [0,0,1,0,1,0,1]), 백업 파일을 새롭게 덮어쓰며
+        #     if (backuploaded[2] == True) and (backuploaded[4] == True) and (backuploaded[6] == True):
+        #         self.cr_backup(backupinfo, True) #상단페이지 백업
+        #     # 그렇지 않으면 백업하지 않음.
+        #     else:
+        #         pass
+        # # 백업이 없으면, 실행
+        # else:
+        #     self.cr_backup(backupinfo, True) #상단페이지 백업
         return list(list_completed_chk)[1]
     
-    # 하단 페이지의 정보 크롤링
+    # 하단 페이지의 정보 크롤링 함수
     def cr_lowerpages(self, target, headers, upper_page_list, keykeys, keyvalues, startini=6, endini=12):
         # lower page - 하단 페이지 실행
         # 수집한 링크에 접속하여 아래의 정보를 저장.
@@ -247,7 +305,7 @@ class WebCrawler:
         # 변수
         count_cr = 1                    # 현재 진행사항을 파악하기 위한 변수 설정
         contents_part_list = []         # 컨텐츠용 변수
-        news = News_company()           # 언론사 수집을 위한 클래스 생성
+        backupinfo = [] #backup을 위한 리스트
 
         
         # 수집한 내부링크(게시판)의 수만큼 loop를 돌며 접속 
@@ -288,14 +346,6 @@ class WebCrawler:
                                 continue
                             tmplist.append(part_html.get('href')) #내부링크
                         else:
-                            # 12.24 성목 수정
-                            # 모든 part_html은 값이 여러개라도 개별적으로 넘어오기 때문에
-                            # isinstance list가 False일 수 밖에 없음
-                            # 그래서 댓글이 리스트로 저장 안되는 상황 발생해서 수정
-                            # 현재는 순서를 바꿔놓았는데 판단해서 isinstance는 지워도 될 듯 함
-                            if j+2 == 10: 
-                                tmplist.append(part_html.text_content())
-
                             #게시글이나 날짜 등은 게시물 내에서 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
                             if len(selected_ir) < 2:
                                 tmpstr = part_html.text_content()
@@ -368,30 +418,72 @@ class WebCrawler:
             contents_part_list.append(content_dict)
             count_cr += 1
         
-        self.cr_backup(contents_part_list) #하단페이지 백업
+        # 2. 하단 페이지 및 뉴스페이지를 크롤링하여 얻은 최종인덱스 숫자 및 완료여부 리턴하고 피클에 저장
+        # backupinfo = [len(contents_part_list), errorpass]
+        
+        # # # 넘어온 백업파일의 리스트가 
+        # # if len(backuploaded) >= 5 and backuploaded[4] == Ture: 
+        # # if :
+        # #     # 모두 완료되었으면 이미 완성된 크롤링이 남긴 백업으로 파악하고 (backuploaded = [0,0,1,0,1,0,1]), 백업 파일을 새롭게 덮어쓰며
+        # #     if (backuploaded[4] == True) and (backuploaded[6] == True):
+        # #         self.cr_backup(backupinfo, True) #상단페이지 백업
+        # #     # 그렇지 않으면 백업하지 않음.
+        # #     else:
+        # #         pass
+        # # # 백업이 없으면, 실행
+        # # else:
+        # #     self.cr_backup(backupinfo, True) #상단페이지 백업
+
+        
+        # self.cr_backup(backupinfo) #하단페이지 백업
         return contents_part_list
 
-    # 페이지를 설정할 수 있게 옵션 선택
-    def crawlingposts(self, target, lastpage, cvalues):
+    # 하단 페이지의 게시판에서 추출한 뉴스링크 크롤링 함수
+    def cr_newspages(self, target, headers, upper_page_list, contents_part_list):
+        # contents_part_list를 호출하여 다시 contents_part_list를 return
+        # 모든 크롤링이 끝나고 contents_part_list에 news_company 추가
+
+        # 변수
+        news = News_company() # 언론사 수집을 위한 인스턴스 생성
+        backupinfo = [] #backup을 위한 리스트
+        n_contents_part_list = contents_part_list #매개변수를 다시 저장하여 넘겨줄 변수 선언
+
+        print('News Company Analyzing...')
+        for i in range(len(contents_part_list)):
+            board_link = upper_page_list[1][i] # 게시물 자체 링크(혹시나 그 링크로 다시 돌아가야 될 때 대비(뉴스 컴퍼니 함수에선 현재 비활성화))
+            #print(board_link)
+            links_in_content = n_contents_part_list[i]['clinks'] # 게시물 내에 
+            #print(links_in_content)
+            news_company = news.add_news_company(links_in_content, board_link)
+            n_contents_part_list[i]['news_company'] = news_company
+            #print(contents_part_list[i])
+        # backupinfo = [len(n_contents_part_list), errorpass]
+        # self.cr_backup(backupinfo) #뉴스백업
+        return n_contents_part_list
+
+    # 사용중지
+    def crawlingposts(self, target, nsplit, lastpage, cvalues):
         ### 크롤링 시간측정 시작 ####
         start_time = time.time()
         u_time = None
         l_time = None
         
         ### 변수설정
+        startpage = 0 #시작 페이지를 생각하고 싶지 않을 때
+        upper_page_list = None
         keykeys = list(cvalues.keys())
         keyvalues = list(cvalues.values())
-        url = keyvalues[0] # 접속할 주소 및 기타 접속 정보
-        news = News_company() # 언론사 수집을 위한 인스턴스 생성        
+        url = keyvalues[0] # 접속할 주소 및 기타 접속 정보      
         headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
         print('%s 에 접속합니다. : ' % url)
 
         #################################
         # 1. upper page - 상단 페이지 실행
-        upper_page_list = self.cr_upperpages(target, url, headers, lastpage, keyvalues, start_time)
+        upper_page_list = self.cr_upperpages(target, url, headers, startpage, lastpage, lastpage, keyvalues, start_time)
         u_time = time.time()
         print('It takes %s seconds completing the upper page crawling and the uploading' % (round(u_time - start_time,2)))
         #print(upper_page_list)
+
         #################################
         # 2. lower page - 하단 페이지 실행
         contents_part_list = self.cr_lowerpages(target, headers, upper_page_list, keykeys, keyvalues)
@@ -399,24 +491,59 @@ class WebCrawler:
         print('It takes %s seconds completing the lower page crawling and the uploading' % (round(l_time - u_time,2)))
         sleep(2)
         #################################
-        # 3. 언론사 정보 가져오기 => contents_part_list를 호출하여 다시 contents_part_list를 return
+        # 3. 언론사 정보 가져오기
         #print(contents_part_list)
-        
-        # 모든 크롤링이 끝나고 contents_part_list에 news_company 추가
-
-        print('News Company Analyzing...')
-        for i in range(len(contents_part_list)):
-            board_link = upper_page_list[1][i] # 게시물 자체 링크(혹시나 그 링크로 다시 돌아가야 될 때 대비(뉴스 컴퍼니 함수에선 현재 비활성화))
-            #print(board_link)
-            links_in_content = contents_part_list[i]['clinks'] # 게시물 내에 
-            #print(links_in_content)
-            news_company = news.add_news_company(links_in_content, board_link)
-            contents_part_list[i]['news_company'] = news_company
-            #print(contents_part_list[i])
-
-        self.cr_backup(contents_part_list) #뉴스백업
+        contents_part_list = self.cr_newspages(target, headers, upper_page_list, contents_part_list)
         print('It takes %s seconds completing the news info crawling and the uploading' % (round(time.time() - l_time,2)))
 
         ### 크롤링 시간측정 종료 ###
         print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time,2)))
         return (upper_page_list, contents_part_list)
+
+    # 구간 세분화 실행
+    def crawlingpostslittle(self, target, nsplit, lastpage, cvalues):
+        ### 크롤링 시간측정 시작 ####
+        start_time = time.time()
+        u_time = None
+        l_time = None
+        
+        ### 변수설정
+        pageranges = self.splitpages(lastpage, nsplit) #시작 및 종료 페이지 구간설정
+        upper_page_list = None
+        keykeys = list(cvalues.keys())
+        keyvalues = list(cvalues.values())
+        url = keyvalues[0] # 접속할 주소 및 기타 접속 정보      
+        headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
+        print('%s 에 접속합니다. : ' % url)
+
+        # 조정한 페이지 구간 수 만큼 루프
+        for i in range(len(pageranges)):
+            #################################
+            # 1. upper page - 상단 페이지 실행
+            upper_page_list = self.cr_upperpages(target, url, headers, pageranges[i][0], pageranges[i][1], lastpage, keyvalues, start_time)
+            u_time = time.time()
+            print('It takes %s seconds completing the upper page crawling and the uploading' % (round(u_time - start_time,2)))
+            #print(upper_page_list)
+
+            #################################
+            # 2. lower page - 하단 페이지 실행
+            contents_part_list = self.cr_lowerpages(target, headers, upper_page_list, keykeys, keyvalues)
+            l_time = time.time()
+            print('It takes %s seconds completing the lower page crawling and the uploading' % (round(l_time - u_time,2)))
+            sleep(2)
+        
+            #################################
+            # 3. 언론사 정보 가져오기
+            #print(contents_part_list)
+            contents_part_list = self.cr_newspages(target, headers, upper_page_list, contents_part_list)
+            print('It takes %s seconds completing the news info crawling and the uploading' % (round(time.time() - l_time,2)))
+
+            ### 크롤링 시간측정 종료 ###
+            print(" It takes %s seconds crawling these webpages" % (round(time.time() - start_time,2)))
+
+            #################################
+            # 4. insert
+            cr = [upper_page_list, contents_part_list]
+            insertmgdb = CrwalingDAO()
+            insertmgdb.insert(cr)
+            

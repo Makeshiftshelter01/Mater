@@ -14,7 +14,7 @@ class Config:
 
         self.config = ConfigParser()
         self.parser = self.config.read(self.filename)
-        print("Load Config : %s" % self.filename)
+        # print("Load Config : %s" % self.filename)
 
         ## 혹시라도 리눅스에 쓸지도 몰라서
         # innerurl = ""
@@ -53,7 +53,6 @@ class Config:
     def read_info_in_config(self, section=None):
         config = self.config
         cdict = self.as_dict(config)
-        print(type(cdict[section]))
         if section == None:
             return cdict
         else:

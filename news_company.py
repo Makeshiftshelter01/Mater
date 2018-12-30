@@ -99,6 +99,9 @@ class News_company:
                             print('%s 오류로 다음 페이지에서 재접속' % e)
                             
                         finally:
+                            # res = requests.get(link[j], headers=headers) # 그 링크로 접속
+                            # html = res.text
+                            # root = lxml.html.fromstring(html)
                             # 만일 에러가났다면,
                             if errorpass == True:
                                 temp = 'Requests Error' # 언론사 목록을 Requests 에러로 돌린다 (url 문제일 확률이 제일 높음)

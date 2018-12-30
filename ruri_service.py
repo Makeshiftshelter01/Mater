@@ -24,7 +24,8 @@ class Crawling:
         return ctargetdata
 
     # 크롤링
-    def crawling(self, target, lastpage, nsplit=1):
+    # 페이지 나누는 것, 첫 번째 페이지 설정은 옵션.
+    def crawling(self, target, lastpage, nsplit=1, firstpage=1):
         # 변수
         result = None
         
@@ -38,7 +39,7 @@ class Crawling:
             result = wc.crawlingposts(target, nsplit, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
         elif nsplit > 1:
             # 크롤링 & insert
-            wc.crawlingpostslittle(target, nsplit, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
+            wc.crawlingpostslittle(target, nsplit, firstpage, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
         else:
             print('잘못 입력')
             sys.exit()

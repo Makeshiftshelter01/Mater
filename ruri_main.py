@@ -47,7 +47,7 @@ import os
 start_time = time.time()
 
 #변수
-target = 'ruriweb' #필수
+target = 'FmKorea' #필수
 firstpage = None #옵션
 lastpage = 5 #필수
 # dividePages는 n개로 구간을 나눠 크롤링.

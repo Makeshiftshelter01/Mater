@@ -33,10 +33,10 @@ class Config:
         config = self.config
         # 입력한 사이트가 존재하면, True 논리연산자 리턴
         if target in config[section]:
-            print('%s를 찾았습니다. 크롤링을 시작합니다. ' % target)
+            print('%s를 찾았습니다. 크롤링 준비를 시작합니다. ' % target)
             return True
         else:
-            print('%s를 찾지 못했습니다. 크롤링을 중단합니다. ' % target)
+            print('%s를 찾지 못했습니다. 크롤링 준비를 중단합니다. ' % target)
             return False
 
     # config to dict

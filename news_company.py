@@ -98,6 +98,10 @@ class News_company:
                             errorpass = True
                             print('%s 오류로 다음 페이지에서 재접속' % e)
                             
+                        except:
+                            print('그 외의 에러')
+                            errorpass = True 
+                              
                         finally:
                             # 만일 에러가났다면,
                             if errorpass == True:
@@ -149,6 +153,10 @@ class News_company:
                             # 내용이 비어 있다면 채우고 각 게시글의 내용, 링크, 댓글 등을 딕셔너리에 저장
                             # 해당 페이지의 정보를 모두 blank 채우고 다음페이지 호출
                             
+                        except:
+                            print('그 외의 에러')
+                            errorpass = True
+
                         finally:
                             # 만일 에러가났다면,
                             if errorpass == True:

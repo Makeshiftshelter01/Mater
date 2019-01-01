@@ -87,11 +87,12 @@ class CrwalingDAO:
             host = 'lhost'
         cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
         cnct.MongoDB()
-        cursor = cnct.m_collection.find({})
+        cursor = cnct.m_collection.find({}).sort([("_id", -1)])
         
         result = []
         for l in cursor:
             result.append(l)
+        cnct.m_client.close()
         return result
 
     

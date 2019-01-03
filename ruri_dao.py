@@ -87,7 +87,7 @@ class CrwalingDAO:
             host = 'lhost'
         cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
         cnct.MongoDB()
-        cursor = cnct.m_collection.find({}).sort([("_id", -1)])
+        cursor = cnct.m_collection.find({}).sort([("_id", -1)]) #최신부터
         
         result = []
         for l in cursor:
@@ -95,4 +95,42 @@ class CrwalingDAO:
         cnct.m_client.close()
         return result
 
-    
+
+    def select_date_range(self, collection, start_date, end_date):
+        config = Config()
+        data = config.get_coll_dict(collection)
+       
+        host = "" # linux구분
+        if platform.system() != "Linux":
+            host = 'host'
+        else:
+            host = 'lhost'
+        cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
+        cnct.MongoDB()
+        cursor = cnct.m_collection.find({'content.idate' : {'$gte' : start_date, '$lt' : end_date}}).sort([("_id", 1)]) # 옛날부터
+        
+        result = []
+        for l in cursor:
+            result.append(l)
+        cnct.m_client.close()
+        return result
+
+
+    def select_first(self, collection): # 윗 함수에서 맨 처음 날짜를 판단하기 위한 함수
+        config = Config()
+        data = config.get_coll_dict(collection)
+       
+        host = "" # linux구분
+        if platform.system() != "Linux":
+            host = 'host'
+        else:
+            host = 'lhost'
+        cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
+        cnct.MongoDB()
+        cursor = cnct.m_collection.find({}).sort([("_id", 1)]).limit(1) # 옛날부터
+        
+        result = []
+        for l in cursor:
+            result.append(l)
+        cnct.m_client.close()
+        return result

@@ -165,5 +165,5 @@ for i in range(len(allperiod)):
     wc = Counter(postext[i])
     print(allperiod[i])
     print(wc.most_common(20))
-
+    print()
 

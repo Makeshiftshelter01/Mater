@@ -90,18 +90,18 @@ class CrwalingDAO:
         
         conn.m_client.close()
 
-    def insertfornews(self, newslist):
-        config = Config()
+    def insertnews(self, newslist):
+        # config = Config()
+        # tmpruri = config.read_info_in_config('navernews')
         status = CrStatus()
         conn = self.setdbinfo()
         
-        tmpruri = config.read_info_in_config('ruriweb')
-        for i in newslist:
-            conn.m_collection.insert_one(i)
-        
+        for i in range(len(newslist)):
+            conn.m_collection.insert_one(newslist[i])
+            status.progressBar(i+1, len(newslist), 'inserting data into mongoDB')
+        conn.m_client.close()
 
         
-
 
     
     def select(self, collection):

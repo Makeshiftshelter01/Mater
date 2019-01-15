@@ -34,12 +34,19 @@ class Crawling:
         
         ##### 실행 및 결과 호출
         wc = WebCrawler() #웹 크롤러 기능 활성화
-        
+        # 페이지 분할 조건
         if nsplit == 1:
-            result = wc.crawlingposts(target, nsplit, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
+            print('페이지 분할 없는 크롤링은 현재 지원하지 않으며 종료합니다.')
+            sys.exit()
+            # result = wc.crawlingposts(target, nsplit, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
         elif nsplit > 1:
             # 크롤링 & insert
-            wc.crawlingpostslittle(target, nsplit, firstpage, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
+            # 목표가 네이버 뉴스일 경우
+            if target == 'navernews':
+                wc.crawling_nvnews(target, nsplit, firstpage, lastpage, ctargetdata)
+            # 커뮤니티일 경우
+            else:
+                wc.crawlingpostslittle(target, nsplit, firstpage, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
         else:
             print('잘못 입력')
             sys.exit()

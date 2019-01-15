@@ -47,7 +47,7 @@ import os
 start_time = time.time()
 
 #변수
-target = 'FmKorea' #필수
+target = 'nveditorial' #필수
 firstpage = None #옵션
 lastpage = 5 #필수
 # dividePages는 n개로 구간을 나눠 크롤링.
@@ -58,7 +58,9 @@ dividePages = 2 #옵션
 cr = Crawling() #크롤링
 # cd = CrwalingDAO() #현재는 mongoDB
 # cd.insert(cr.crawling('ruriweb', 10)) #사용금지
+
 cr.crawling(target, lastpage, dividePages) # (목표, 마지막페이지, (옵션 : 원하는 페이지 분할 개수), (옵션 : 첫 번째 페이지))
+
 # 프로그램 종료 측정 및 결과 출력
 print('It takes %s seconds completing the crawling and the uploading' % (round(time.time() - start_time,2)))
 print('------------------------------------------------------------------------------')

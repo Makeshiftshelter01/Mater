@@ -90,6 +90,19 @@ class CrwalingDAO:
         
         conn.m_client.close()
 
+    def insertfornews(self, newslist):
+        config = Config()
+        status = CrStatus()
+        conn = self.setdbinfo()
+        
+        tmpruri = config.read_info_in_config('ruriweb')
+        for i in newslist:
+            conn.m_collection.insert_one(i)
+        
+
+        
+
+
     
     def select(self, collection):
         config = Config()

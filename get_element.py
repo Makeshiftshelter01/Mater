@@ -22,6 +22,7 @@ class getElement:
         self.cthumbdownl = []
         self.idate = []
         self.news_company = []
+        self.t_ccontent = []
 
         for i in range(len(result)):
             self.id.append(result[i]['_id'])
@@ -38,3 +39,4 @@ class getElement:
             self.cthumbdownl.append(result[i]['content']['cthumbdownl'])
             self.idate.append(result[i]['content']['idate'])
             self.news_company.append(result[i]['content']['news_company'])
+            self.t_ccontent.append(result[i]['tokenized']['T_ccontent'])

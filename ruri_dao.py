@@ -107,7 +107,7 @@ class CrwalingDAO:
             host = 'lhost'
         cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection'])
         cnct.MongoDB()
-        cursor = cnct.m_collection.find({'content.idate' : {'$gte' : start_date, '$lt' : end_date}}).sort([("_id", 1)]) # 옛날부터
+        cursor = cnct.m_collection.find({'content.idate' : {'$gte' : start_date, '$lt' : end_date}}).sort([("_id", 1)]).limit(70) # 옛날부터
         
         result = []
         for l in cursor:

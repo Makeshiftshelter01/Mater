@@ -7,11 +7,17 @@ from collections import Counter
 import konlpy
 from konlpy.tag import Okt
 import time
+import os
+import psutil
 
 #result = cd.select('inven_test')
 # 원하는 콜렉션에서 데이터 가져오기 
+memory = []
 
+process = psutil.Process(os.getpid())   # 메모리 확인용
+mem_before = process.memory_info().rss / 1024 / 1024
 
+start_time = time.time()
 result = cd.select_first('token_ilbe')
 gd = getElement(result)
 
@@ -44,41 +50,105 @@ twitter = Okt()
 # print('총 구간:',period_number)
 
 
+#------------------------------------------------
+from pymongo import MongoClient
+
+client = MongoClient('YOURIP')
+#   데이터베이스 객체 가져오기
+db = client.YOURDB
+
+# 학생 컬렉션 객체 가져오기
+coll = db.YOURCOLL
+
+alldict = []
+
+
+
+
+
+#-------------------------------------------------
+
+
+
+
+
 allperiod = []
-alltext = []
+# alltext = []
+wclist = []
 postext= []
 listcnt = 0
 while True:
+    #allperiod = []
+    alltext = []
     end_date = start_date + datetime.timedelta(days=7)
     print('started',start_date)
     print('ended', end_date)
 
     rs = cd.select_date_range('token_ilbe', start_date, end_date)
-    gd = getElement(rs)
+    #gd = getElement(rs)
     
     cnt = len(rs)
     
     if cnt == 0 or cnt == None: # 가져온 행의 갯수가 0이거나 없으면 while문 중지
         break
+  
     else:
         timerange = str(start_date)[:10] + '~'+ str(end_date)[:10] # 00:00:00 같은 시간 제거
-        allperiod.append(timerange)
+        # allperiod = timerange
+        #allperiod.append(timerange)
         
-        alltext.append([])
+        #alltext.append([])
         postext.append([])
-        for i in range(len(gd.id)):
-            if gd.t_ccontent[i] != 'fillblanks':
-                for j in range(len(gd.t_ccontent[i])):    
-                    alltext[listcnt].append(gd.t_ccontent[i][j])
-        
-            # if gd.creplies[i] != 'fillblanks':
-            #     for l in range(len(gd.creplies[i])):
-            #         alltext[listcnt].append(gd.creplies[i][l])
 
-        listcnt += 1
+        for idx in range(len(rs)):
+            #print(rs[idx])
+
+
+            nouns = rs[idx]['tokenized']['T_noun']
+
+            for i in range(len(nouns)):
+                if len(nouns[i][0]) >= 2:
+                    #alltext[listcnt].append(nouns[i][0])
+                    alltext.append(nouns[i][0])
+                
+                # if gd.creplies[i] != 'fillblanks':
+                #     for l in range(len(gd.creplies[i])):
+                #         alltext[listcnt].append(gd.creplies[i][l])
+
+        #listcnt += 1
         
         start_date = start_date + datetime.timedelta(days=7)
-        
+        mem_after = process.memory_info().rss / 1024 / 1024
+        memory.append(mem_after)
+        print('메모리', memory)
+
+       
+        wc = Counter(alltext)
+        #allperiod.append()
+        wcmost = wc.most_common(10)
+        #print(wcmost)
+        #wclist.append(wcmost)
+        #print()
+
+        for i in range(len(wcmost)):
+            temp = {
+                'timerange' : timerange,
+                'keyword' : wcmost[i][0],
+                'freq' : wcmost[i][1]
+            }
+
+#------------------------------------------------------------
+            coll.insert_one(temp)
+            
+            
+            #alldict.append(temp)
+
+
+client.close()
+
+
+#----------------------------------------------------------------------
+
         #print(alltext)
 print(len(allperiod))
 print(len(alltext))
@@ -163,9 +233,27 @@ print('끝!')
 #                 postext[i].append(content[l])
 
 
-for i in range(len(allperiod)):
-    wc = Counter(alltext[i])
-    print(allperiod[i])
-    print(wc.most_common(20))
-    print()
+# for i in range(len(allperiod)):
+#     wc = Counter(alltext[i])
+#     print(allperiod[i])
+#     print(wc.most_common(20))
+#     print()
 
+
+
+
+
+
+
+
+
+
+
+
+
+end_time = time.time()
+
+print(end_time-start_time)
+
+
+import pickle

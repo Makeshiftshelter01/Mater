@@ -182,6 +182,33 @@ class WebCrawler:
         print('-----------------------------------------------------')
         return indexdiv
 
+    # 매개변수로 날짜를 쓰는 사이트를 위해 만든 함수
+    # 페이지를 날짜로 변경해주는 함수 
+    def convertpagetodate(self, firstpage, lastpage):
+        # 페이지로 받아오는 값은 index값이기 때문에 마지막 페이지에서 1을 뺀다. [0-3] => 3apge (but 4개로 보임)
+        lastpage = lastpage-1 # 구간값
+        cnt = lastpage - firstpage # 구간값
+        today = datetime.date.today() 
+
+        # 구간분할용으로 페이지가 첫 페이지가 아니면 기준날짜를 바꿔준다.
+        if firstpage > 0: # 1, 2....
+            today = today - datetime.timedelta(days=(firstpage)) # 0
+
+        # 목표 날짜를 정한다.
+        targetday = today - datetime.timedelta(days=cnt) # 구간값
+
+        # 한 페이지를 변경하기 위해서는 하루 전 날짜가 필요하기 때문에 이를 모두 계산하여 제너레이터로 만들어 둔다. 
+        def daysgenerator(today, cnt): # 4
+            for i in range(1, cnt+1): # 4 + 1
+                nextday = today - datetime.timedelta(days=i)
+                nextday = datetime.datetime.strftime(nextday, '%Y%m%d')
+                yield nextday
+        
+        nextdays = daysgenerator(today, cnt)
+        # 날짜를 str로 변환
+        today = datetime.datetime.strftime(today, '%Y%m%d')
+        targetday = datetime.datetime.strftime(targetday, '%Y%m%d')
+        return today, targetday, nextdays, cnt
 
 
     # 상단 페이지의 정보 크롤링 함수
@@ -686,17 +713,222 @@ class WebCrawler:
 
             for i in range(len(news_title_list)):
                 temp = {
-                    'news_topic' : topic_list[i],
-                    'news_link' : news_link_list[i],
-                    'news_title' : news_title_list[i],
-                    'news_company' : news_company_list[i],
-                    'news_date' : content_date_list[i],
-                    'news_content' : content_list[i]
+                    "cno": topic_list[i],
+                    "clink": news_link_list[i],
+                    "ctitle": news_title_list[i],
+                    "cthumbup": "fillblanks",
+                    "cthumbdown": "fillblanks",
+                    "content":
+                        {
+                            "ccontent": content_list[i],
+                            "clinks": 'fillblanks',
+                            "creplies": 'fillblanks',
+                            "cthumbupl": 'fillblanks',
+                            "cthumbdownl": 'fillblanks',
+                            "idate": content_date_list[i],
+                            "news_company": news_company_list[i]
+                        }
                 }
 
                 news_dict_list.append(temp)
             
             insertDB = CrwalingDAO()
             insertDB.insertnews(news_dict_list)
+
+    def crawling_natepann(self, target, nsplit, firstpage, lastpage, cvalues):
+        status = CrStatus()
+        keykeys = list(cvalues.keys())
+        keyvalues = list(cvalues.values())
+
+        # 메인 페이지 들어갈 기본 url 및 헤더
+        head = keyvalues[1]
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
+
+        
+        # 페이지 분할
+        pageranges = self.splitpages(nsplit, lastpage, firstpage)
+
+        for p in range(len(pageranges)):
+
+            # 페이지를 날짜로 변환
+            strDates = self.convertpagetodate(pageranges[p][0], pageranges[p][1])
+            
+            start_str = strDates[0]
+            end_str = strDates[1]
+            next_str = strDates[2]
+            cnt = strDates[3]
+
+            print('시작일 : %s - 종료일 : %s' % (start_str, end_str))
+            time.sleep(2)
+
+            # 분할된 페이지의 수만큼 반복
+            for splitedpage in range(int(pageranges[p][0])+1, int(pageranges[p][1])+1):
+            # while cnt != 0: # 돌릴 날짜의 일수에 따라 while문으로 계속 반복
+                print('=-=-=-=-=-=', start_str, '시작! =-=-=-=-=-=')
+                # =-=-=-=-=-=-=-=-=-=-=-=-= PHASE 1 =-=-=-=-=-=-=-=-=-=-=-=-=
+                # 메인 페이지에 접속 및 글의 링크 가져오기
+
+                # 기본 url + 입력한 시작 날짜 = 메인 페이지 URL
+                main_url = head + start_str
+
+                # 페이지 접속
+                res = requests.get(main_url, headers=headers)
+                html = res.text
+                root = lxml.html.fromstring(html)
+
+                # 오늘의 톡, 오늘의 연예가 섞여있음
+                # 오늘의 톡만 뽑기 위해 첫번째 섹션만 일단 html 텍스트로 가져옴
+                upper_section_css = keyvalues[2]
+                todaytalk = root.cssselect(upper_section_css)[0]
+                todaytalk = lxml.html.tostring(todaytalk)
+
+                # 가져온 오늘의 톡 섹션만 파싱
+                subroot = lxml.html.fromstring(todaytalk)
+
+                # 글 내부로 안내할 링크를 모을 리스트
+                link_list = []
+
+                # 필요 css
+                clink_css = keyvalues[3]
+
+                # 'title' 속성을 가지고 있는 링크만 가져와서 리스트에 추가
+                for part_html in subroot.cssselect(clink_css):
+                    link_list.append(part_html.get('href'))
+                print('링크 수 : ', len(link_list))
+
+                # =-=-=-=-=-=-=-=-=-=-=-=-= PHASE 2 =-=-=-=-=-=-=-=-=-=-=-=-=
+                # 가져온 링크를 통해 글 안으로 접속
+
+                # 가져온 링크는 /로 시작하므로 또 다른 기본 URL 준비
+                base_url = keyvalues[0]
+
+                # 필요 리스트
+                title_list = []
+                content_list = []
+                date_list = []
+                reply_list = []
+                thumbup_list = []
+                thumbdown_list = []
+
+                # 필요 css
+                title_css = keyvalues[4]
+                content_css = keyvalues[5]
+                reply_css = keyvalues[6]
+                thumbup_css = keyvalues[7]
+                thumbdown_css = keyvalues[8]
+                date_css = keyvalues[9]
+
+                # 가져온 글 링크 개수에 맞게 반복문
+                for i in range(len(link_list)):
+                    inurl = base_url + link_list[i]
+
+                    # 글 접속 및 css로 요소 가져오기
+                    # 예외처리 이유 : 여러가지 이유로 삭제된 글들이 많아서 Indexerror 일으킴
+                    # 예외처리는 밑에 해놓았고, finally로 마무리 해놓았음
+                    try:
+                        res2 = requests.get(inurl, headers=headers)
+                        html2 = res2.text
+                        root2 = lxml.html.fromstring(html2)
+
+                        # 글 제목
+                        title = root2.cssselect(title_css)[0]
+                        title = title.text_content()
+
+                        # 글 내용
+                        content = root2.cssselect(content_css)[0]
+                        content = content.text_content()
+
+                        # 날짜는 datetime 으로 변형하였음
+                        date = root2.cssselect(date_css)[0]
+                        date = date.text_content()
+                        date = datetime.datetime.strptime(date, '%Y.%m.%d %H:%M')
+
+                        # # 댓글은 베스트3포함 1페이지만.
+                        reply = []
+                        for part_html in root2.cssselect(reply_css):
+                            reply.append(part_html.text_content())
+
+                        # 추천
+                        thumbup = root2.cssselect(thumbup_css)[0]
+                        thumbup = thumbup.text_content()
+
+                        # 비추천
+                        thumbdown = root2.cssselect(thumbdown_css)[0]
+                        thumbdown = thumbdown.text_content()
+
+
+                    # 삭제된 글에 대해서 예외처리, 모든 항목 fillblanks
+                    except IndexError:
+                        title = 'fillblanks'
+                        content = 'fillblanks'
+                        date = 'fillblanks'
+                        reply = 'fillblanks'
+                        thumbup = 'fillblanks'
+                        thumbdown = 'fillblanks'
+
+                        print(str(i+1), '번째 글은 삭제되었습니다')
+
+                    # try/except와 관계없이 가져온 요소들을 각기 리스트에 저장
+                    finally:
+                        title_list.append(title)
+                        content_list.append(content)
+                        date_list.append(date)
+                        reply_list.append(reply)
+                        thumbup_list.append(thumbup)
+                        thumbdown_list.append(thumbdown)
+
+                    status.progressBar(i+1, len(link_list), '내용 크롤링중 ')
+
+                # =-=-=-=-=-=-=-=-=-=-=-=-= PHASE 3 =-=-=-=-=-=-=-=-=-=-=-=-=
+                # 사전을 만들고 그 사전을 리스트에 저장
+                # 그 리스트를 insert
+                dict_list = []
+
+                for i in range(len(title_list)):
+                    temp = {
+                        "cno": 'fillblanks',
+                        "clink": link_list[i],
+                        "ctitle": title_list[i],
+                        "cthumbup": "fillblanks",
+                        "cthumbdown": "fillblanks",
+                        "content":
+                            {
+                                "ccontent": content_list[i],
+                                "clinks": 'fillblanks',
+                                "creplies": 'fillblanks',
+                                "cthumbupl": thumbup_list[i],
+                                "cthumbdownl": thumbdown_list[i],
+                                "idate": date_list[i],
+                                "news_company": 'fillblanks'
+                            }
+                    }
+
+                    dict_list.append(temp)
+                    status.progressBar(i+1, len(title_list), '내용 저장중 ')
+
+                # 인서트
+                insertDB = CrwalingDAO()
+                insertDB.insertnews(dict_list)
+
+                # 인서트 끝나고 안내문
+
+                print('=-=-=-=-=-=', start_str, '완료! =-=-=-=-=-=')
+
+                print('\n')
+                time.sleep(1)
+                print('1초 슬립!')
+                print('\n')
+
+                # =-=-=-=-=-=-=-=-=-=-=-=-= PHASE 4 =-=-=-=-=-=-=-=-=-=-=-=-=
+                # 날짜 진행
+                if splitedpage != int(pageranges[p][1]):
+                    start_str = next(next_str)
+                else:
+                    start_str = None
+                print('다음날 : ', start_str)
+
+                # # n일에서 -1을 해줌
+                # cnt -= 1
 
         

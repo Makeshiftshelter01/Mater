@@ -45,6 +45,8 @@ class Crawling:
             if target == 'navernews':
                 wc.crawling_nvnews(target, nsplit, firstpage, lastpage, ctargetdata)
             # 커뮤니티일 경우
+            elif target == 'natepann':
+                wc.crawling_natepann(target, nsplit, firstpage, lastpage, ctargetdata)
             else:
                 wc.crawlingpostslittle(target, nsplit, firstpage, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
         else:

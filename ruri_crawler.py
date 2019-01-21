@@ -878,6 +878,7 @@ class WebCrawler:
                         thumbup_list.append(thumbup)
                         thumbdown_list.append(thumbdown)
 
+                    
                     status.progressBar(i+1, len(link_list), '내용 크롤링중 ')
 
                 # =-=-=-=-=-=-=-=-=-=-=-=-= PHASE 3 =-=-=-=-=-=-=-=-=-=-=-=-=
@@ -896,7 +897,7 @@ class WebCrawler:
                             {
                                 "ccontent": content_list[i],
                                 "clinks": 'fillblanks',
-                                "creplies": 'fillblanks',
+                                "creplies": reply_list[i],
                                 "cthumbupl": thumbup_list[i],
                                 "cthumbdownl": thumbdown_list[i],
                                 "idate": date_list[i],

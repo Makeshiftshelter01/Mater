@@ -39,10 +39,10 @@ start_time = time.time()
 #변수
 target = 'natepann' #필수
 firstpage = None #옵션
-lastpage = 50 #필수
+lastpage = 6 #필수
 # dividePages는 n개로 구간을 나눠 크롤링.
 # 만약 구간이 n개로 나눠지지 않을 경우 나머지를 처리하기 위해 1회 더 실행
-dividePages = 7 #옵션
+dividePages = 2 #옵션
 
 # 크롤링
 cr = Crawling() #크롤링

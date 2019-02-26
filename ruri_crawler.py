@@ -245,6 +245,9 @@ class WebCrawler:
                 params = {'page': i}
                 # pass # 아래의 주석을 수정하여 원하는대로 파라미터를 수정할 수 있음.
                 # params = {'po' : i-1} #0페이지부터 시작할 수 있도록 i-1
+            elif target == 'MPark':
+                params = {'p':(i-1)*30+1, 'm':'search','query':'정치', 'select':'spf'}
+                # p=1&m=search&query=정치&select=spf
             else:
                 params = {'page': i}
 
@@ -254,6 +257,7 @@ class WebCrawler:
             try:
                 #접속
                 res = requests.get(url, headers=headers, params=params)
+                # print(res.url)
                 html = res.text
                 root = lxml.html.fromstring(html)
                 

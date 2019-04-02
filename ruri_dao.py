@@ -11,7 +11,7 @@ import platform
 
 class CrwalingDAO:
     #load db info
-    def setdbinfo(self):
+    def setdbinfo(self, collection):
         host = "" # linux구분
         if platform.system() != "Linux":
             host = 'host'
@@ -21,7 +21,7 @@ class CrwalingDAO:
         # ini파일을 이용해 접속 데이터 읽기
         config = Config()
         data = config.read_info_in_config('mongoDB')
-        cnct = ConnectTo(data[host],int(data['port']),data['database'],data['collection']) #인스턴스화
+        cnct = ConnectTo(data[host],int(data['port']),data['database'], collection) #인스턴스화
         cnct.MongoDB() #mongoDB 접속, 현재는 mongoDB만 가능하지만 추후 다른 DB도 선택할 수 있도록 변경
         return cnct
 
@@ -75,13 +75,13 @@ class CrwalingDAO:
             for i in range(0, len(exup)):
                 self.insert_one(conn, keys, startini, endini, upper, lower, i, len(exup))
 
-    def insert(self, cr, startini = 0, endini = 6):
+    def insert(self, cr, collection, startini = 0, endini = 6):
         config = Config()
 
         # 크롤링 CSS를 가져오려 했는데 설정하는 기능이 없어 우선 ruriweb을 넣어 임시로 만듦.
         tmpruri = config.read_info_in_config('ruriweb')
 
-        conn = self.setdbinfo() #접속값을 받아옴.
+        conn = self.setdbinfo(collection) #접속값을 받아옴.
 
         print('titles this crawler has collected till now : ', len(sorted(cr[0][0]))) ### 자료를 얼마나 모았을까? ###
 
@@ -90,11 +90,11 @@ class CrwalingDAO:
         
         conn.m_client.close()
 
-    def insertnews(self, newslist):
+    def insertnews(self, newslist, collection):
         # config = Config()
         # tmpruri = config.read_info_in_config('navernews')
         status = CrStatus()
-        conn = self.setdbinfo()
+        conn = self.setdbinfo(collection)
         
         for i in range(len(newslist)):
             conn.m_collection.insert_one(newslist[i])
@@ -102,7 +102,25 @@ class CrwalingDAO:
         conn.m_client.close()
 
         
+    def select_last_time(self, collection): # 중복 체크용 함수 
+        conn = self.setdbinfo(collection) #접속값을 받아옴.
+        try:
+            cursor = conn.m_collection.find({}).sort([('content.idate', -1), ('clink', -1)]).limit(1)  # 중복 체크를 위해 가장 최신 레코드를 가져온다 
+        
+            result = [rs for rs in cursor]
+            result = result[0]
+            last_time = result['content']['idate']  # 날짜
 
+            title = result['ctitle'] # 타이틀
+
+        except IndexError: # 아예 처음 시작해서 아무것도 없을 때 
+            last_time = ''
+            title = ''
+        
+        conn.m_client.close()
+
+    
+        return last_time, title # 날짜와 제목을 반환
     
     def select(self, collection):
         config = Config()

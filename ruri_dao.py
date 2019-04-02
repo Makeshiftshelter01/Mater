@@ -6,6 +6,7 @@ from time import sleep
 import math
 import json
 import os
+import re
 
 import platform
 
@@ -102,16 +103,20 @@ class CrwalingDAO:
         conn.m_client.close()
 
         
-    def select_last_time(self, collection): # 중복 체크용 함수 
+    def select_last_time(self, collection, target): # 중복 체크용 함수 
         conn = self.setdbinfo(collection) #접속값을 받아옴.
         try:
             cursor = conn.m_collection.find({}).sort([('content.idate', -1), ('clink', -1)]).limit(1)  # 중복 체크를 위해 가장 최신 레코드를 가져온다 
-        
             result = [rs for rs in cursor]
             result = result[0]
-            last_time = result['content']['idate']  # 날짜
-
+            last_time = result['content']['idate']  # 날짜  
             title = result['ctitle'] # 타이틀
+
+            # Mpark 이라면 정규 표현식으로 맨 마지막의 댓글 수 지움
+            if target == 'MPark':
+                title = re.sub(r'.\[.*\]', '', title)
+            elif target == 'ygosu':  # 와이고수는 날짜란에 조회수가 함께 있어서 조회수가 올라가면 매칭이 안됨..
+                last_time = re.sub('READ.*','',last_time)
 
         except IndexError: # 아예 처음 시작해서 아무것도 없을 때 
             last_time = ''

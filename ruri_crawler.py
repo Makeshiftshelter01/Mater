@@ -253,7 +253,9 @@ class WebCrawler:
 
             elif target == 'MPark':
                 params = {'p':(i-1)*30+1, 'm':'search','query':'정치', 'select':'spf'}
-
+            
+            elif target == 'inven':
+                params = {'p':i}
             else:
                 params = {'page': i}
 
@@ -444,7 +446,9 @@ class WebCrawler:
                         tmpvalue = special_replies.get_clien_replies(innerlink)
                     elif target == 'theqoo' and j+2 == 10:
                         tmpvalue = special_replies.get_theqoo_replies(innerlink)
-
+                    elif target == 'inven' and j+2 == 10:
+                        tmpvalue = special_replies.get_inven_replies(innerlink)
+                    
                     # 중복 최초발견
                     if (j+2 == 13 and tmpvalue == last_time and cut_duplicate == None and maybe_duplicate == True): 
                         

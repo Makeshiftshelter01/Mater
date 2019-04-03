@@ -38,7 +38,7 @@ start_time = time.time()
 
 #변수
 collection = 'crawl_test'
-target = 'inven' #필수
+target = 'theqoo' #필수
 firstpage =1 #옵션
 lastpage =5 #필수
 # dividePages는 n개로 구간을 나눠 크롤링.

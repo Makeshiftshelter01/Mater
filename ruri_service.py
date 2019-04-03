@@ -43,10 +43,10 @@ class Crawling:
             # 크롤링 & insert
             # 목표가 네이버 뉴스일 경우
             if target == 'navernews':
-                wc.crawling_nvnews(target, nsplit, firstpage, lastpage, ctargetdata)
+                wc.crawling_nvnews(collection, target, nsplit, firstpage, lastpage, ctargetdata)
             
             elif target == 'natepann':
-                wc.crawling_natepann(target, nsplit, firstpage, lastpage, ctargetdata)
+                wc.crawling_natepann(collection, target, nsplit, firstpage, lastpage, ctargetdata)
             
             # 커뮤니티일 경우
             else:

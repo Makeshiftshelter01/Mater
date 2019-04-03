@@ -4,6 +4,28 @@ import requests
 import lxml.html
 
 
+# 댓글 리스트가 비어있으면 '', 리스트가 1개만 담겨있다면 스트링으로 변환, 아니라면 리스트를 그대로 돌려주는 함수
+def check_replies_list(replies_list):
+    if replies_list == []:
+        replies_list = ''
+
+    elif len(replies_list) == 1:
+        replies_list = replies_list[0]
+
+    return replies_list
+
+
+def get_replies_from_parsed_html(parsed_html):  # lxml 파싱으로 가져오는 방식은 동일하게 적용
+    replies_list = []
+
+    for comment in parsed_html:
+        replies_list.append(comment.text_content())
+
+    replies_list = check_replies_list(replies_list)
+
+    return replies_list
+
+
 def get_ygosu_replies(link):
     try:
         # 리플 정보를 가지고 있는 스크립트를 가져오기 위해 get 리퀘스트부터 먼저 실행
@@ -16,6 +38,7 @@ def get_ygosu_replies(link):
             if 'var reply_info_str' in p.text_content():
                 reply_info = p.text_content()
 
+        # 잘라서 적절한 형태로 변환
         reply_info = re.findall("reply_info_str=.*\'", reply_info)[0]
         reply_info = re.sub('reply_info_str=', '', reply_info)
 
@@ -29,24 +52,28 @@ def get_ygosu_replies(link):
             'Accept-Language': 'en-US,en;q=0.9,ko;q=0.8,la;q=0.7'
         }
 
+        data = {'reply_info': reply_info}
+
+        # post방식으로 가져오기
         res = requests.post('https://www.ygosu.com/reply/reply_list.yg',
-                            headers=ygosu_headers, data={'reply_info': reply_info})
-        test_response = res.text
+                            headers=ygosu_headers, data=data)
 
-        jj = json.loads(test_response)
+        received_response = res.text
 
-        root = lxml.html.fromstring(jj['html'])
+        # json 형식으로 파싱
+        parsed_json = json.loads(received_response)
 
-        ygosu_replies = []
-        for p in root.cssselect('td.comment'):
-            ygosu_replies.append(p.text_content())
+        # json 내부에 다시 html 형식을 가져올 수 있으므로 가져온 후 html 파싱
+        parsed_html = lxml.html.fromstring(parsed_json['html'])
 
-        if ygosu_replies == []:
-            ygosu_replies = ''
-        elif len(ygosu_replies) == 1:
-            ygosu_replies = ygosu_replies[0]
+        # 리플은 함수로 보내서 처리
+        ygosu_replies = get_replies_from_parsed_html(
+            parsed_html.cssselect('td.comment'))
+
     except:
+        # 에러가 뜨면 요청이 비어있어서 그런 것(리플이 없는 것)이므로 빈 것으로 반환
         ygosu_replies = ''
+
     return ygosu_replies
 
 
@@ -60,19 +87,16 @@ def get_clien_replies(link):
         # 클리앙은 겟 방식으로
         res = requests.get(comment_link)
         html = res.text
-        root = lxml.html.fromstring(html)
+        parsed_html = lxml.html.fromstring(html)
 
-        # 리플 담을
-        clien_replies = []
-        for p in root.cssselect('div.comment_view'):
-            clien_replies.append(p.text_content())
+        # 파싱한 것은 리플 가져오는 함수로 보내기
+        clien_replies = get_replies_from_parsed_html(
+            parsed_html.cssselect('div.comment_view'))
 
-        if clien_replies == []:
-            clien_replies = ''
-        elif len(clien_replies) == 1:
-            clien_replies = clien_replies[0]
     except:
+        # 에러가 뜨면 요청이 비어있어서 그런 것(리플이 없는 것)이므로 빈 것으로 반환
         clien_replies = ''
+
     return clien_replies
 
 
@@ -91,25 +115,28 @@ def get_theqoo_replies(link):
 
         res = requests.post('https://theqoo.net/index.php',
                             headers=headers, data=data)
-        html = res.text
+
+        received_response = res.text
+
         # 숨어있는 BOM 문자열 때문에 일반적으로 파싱이 안되므로 첫번째 문자를 자르고 파싱
-        jj = json.loads(html[1:])
+        parsed_json = json.loads(received_response[1:])
 
         theqoo_replies = []
-        for comment in jj['comment_list']:
-            theqoo_replies.append(comment['content'])
+        for comment in parsed_json['comment_list']:
+            rep = comment['content']
+            theqoo_replies.append(rep)
 
-        if theqoo_replies == []:
-            theqoo_replies = ''
-        elif len(theqoo_replies) == 1:
-            theqoo_replies = theqoo_replies[0]
+        # 리스트 체크 함수를 다이렉트로 씀
+        theqoo_replies = check_replies_list(theqoo_replies)
+
     except:
+        # 에러가 뜨면 요청이 비어있어서 그런 것(리플이 없는 것)이므로 빈 것으로 반환
         theqoo_replies = ''
+
     return theqoo_replies
 
 
 def get_inven_replies(link):
-
     try:
         board_index = re.sub(r'.*wow/', '', link)
         board_index = re.sub(r'/.*', '', board_index)
@@ -138,21 +165,31 @@ def get_inven_replies(link):
 
         res = requests.post(
             'http://www.inven.co.kr/common/board/comment.json.php', headers=headers, data=data)
-        responses = res.text
+        received_response = res.text
 
-        jj = json.loads(responses)
+        parsed_json = json.loads(received_response)
 
         inven_replies = []
-        for comment in jj['commentlist'][0]['list']:
+        for comment in parsed_json['commentlist'][0]['list']:
             rep = comment['o_comment']
-            rep = re.sub('nbsp;', ' ', rep) #띄어쓰기가 nbsp로 처리되어있어서 후에 토큰화 어려움이 있을 것 같아 간단히 처리
-            rep = re.sub(r'&amp;', '', rep)
             inven_replies.append(rep)
 
-        if inven_replies == []:
-            inven_replies = ''
-        elif len(inven_replies) == 1:
-            inven_replies = inven_replies[0]
+        # 리스트 체크 함수를 다이렉트로 씀
+        inven_replies = check_replies_list(inven_replies)
+
     except:
-        inven_replies=''
+        # 에러가 뜨면 요청이 비어있어서 그런 것(리플이 없는 것)이므로 빈 것으로 반환
+        inven_replies = ''
+
     return inven_replies
+
+def get_special_replies(target, link):
+    if target == 'ygosu':
+        return get_ygosu_replies(link)
+    elif target == 'clien':
+        return get_clien_replies(link)
+    elif target == 'theqoo':
+        return get_theqoo_replies(link)
+    elif target == 'inven':
+        return get_inven_replies(link)
+        

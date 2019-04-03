@@ -450,7 +450,7 @@ class WebCrawler:
                         
                         cut_duplicate = count_cr - 1  # 중복 제거용 인덱스 생성
                         print(
-                            ' \n*** 중복 글이 발견되었습니다. 해당 글 이전의 글만 서버에 업로드 후 종료합니다 *** \n')
+                            ' \n\n*** 중복 글이 발견되었습니다. 해당 글 이전의 글만 서버에 업로드 후 종료합니다 *** \n')
                         print('중복 내용: %s %s %s %s\n ' %
                             (last_time, last_title, part_html.text_content(),upper_page_list[2][count_cr - 1] ))
                       

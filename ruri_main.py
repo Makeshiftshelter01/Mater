@@ -4,6 +4,7 @@ from ruri_service import Crawling
 from ruri_dao import CrwalingDAO
 import time
 import os
+import email_module
 
 # import logging
 # import logging.handlers
@@ -37,8 +38,12 @@ import os
 start_time = time.time()
 
 #변수
-collection = 'crawl_test'
-target = 'theqoo' #필수
+# collection = 'crawl_test'
+# target = 'theqoo' #필수
+
+collection_list = ['crawl_test1', 'crawl_test2']
+target_list = ['theqoo', 'clien']
+
 firstpage =1 #옵션
 lastpage =5 #필수
 # dividePages는 n개로 구간을 나눠 크롤링.
@@ -50,8 +55,19 @@ cr = Crawling() #크롤링
 # cd = CrwalingDAO() #현재는 mongoDB
 # cd.insert(cr.crawling('ruriweb', 10)) #사용금지
 
-cr.crawling(collection, target, lastpage, dividePages, firstpage) # (콜렉션명,목표, 마지막페이지, (옵션 : 원하는 페이지 분할 개수), (옵션 : 첫 번째 페이지))
+try:
+    for i in range(len(collection_list)):
+        target = target_list[i]
+        collection = collection_list[i]
+        cr.crawling(collection, target, lastpage, dividePages, firstpage) # (콜렉션명,목표, 마지막페이지, (옵션 : 원하는 페이지 분할 개수), (옵션 : 첫 번째 페이지))
 
-# 프로그램 종료 측정 및 결과 출력
-print('It takes %s seconds completing the crawling and the uploading' % (round(time.time() - start_time,2)))
-print('------------------------------------------------------------------------------')
+        # 프로그램 종료 측정 및 결과 출력
+        print('It takes %s seconds completing the crawling and the uploading' % (round(time.time() - start_time,2)))
+        print('------------------------------------------------------------------------------')
+
+    email_module.send_email('Crawling Tasks Completed', 'Crawling Tasks Completed')
+
+except:
+    print('FAILED!')
+    email_module.send_email('Crawling Tasks Failed', 'Crawling Tasks Failed')
+    

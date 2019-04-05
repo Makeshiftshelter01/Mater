@@ -93,7 +93,7 @@ class CrwalingDAO:
 
     def insertnews(self, newslist, collection):
         # config = Config()
-        # tmpruri = config.read_info_in_config('navernews')
+        # tmpruri = config.read_info_in_config('navernews' )
         status = CrStatus()
         conn = self.setdbinfo(collection)
         

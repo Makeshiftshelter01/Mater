@@ -16,6 +16,7 @@ import time  # 시간측정
 import datetime
 import re
 
+import random
 # 특수한 리플 추출용
 import special_replies
 
@@ -461,6 +462,9 @@ class WebCrawler:
                     Dict_completed_chk = self.cr_pagesinspector(
                         tmpvalue).values()
                     content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
+                
+                if target == 'FmKorea':
+                    sleep(random.random() * 2)
 
             except ConnectionResetError as e:
                 errorpass = True

@@ -34,18 +34,17 @@ import email_module
 # logger.error('error')
 # logger.critical('critical')
 
-# 프로그램 시작 측정
-start_time = time.time()
+
 
 #변수
 # collection = 'crawl_test'
 # target = 'theqoo' #필수
 
-collection_list = ['crawl_test1', 'crawl_test2']
-target_list = ['theqoo', 'clien']
+collection_list = ['fm_test1', 'fm_test1', 'fm_test1']
+target_list = ['clien', 'theqoo', 'inven']
 
 firstpage =1 #옵션
-lastpage =5 #필수
+lastpage =3 #필수
 # dividePages는 n개로 구간을 나눠 크롤링.
 # 만약 구간이 n개로 나눠지지 않을 경우 나머지를 처리하기 위해 1회 더 실행
 dividePages = lastpage - firstpage #옵션
@@ -55,8 +54,13 @@ cr = Crawling() #크롤링
 # cd = CrwalingDAO() #현재는 mongoDB
 # cd.insert(cr.crawling('ruriweb', 10)) #사용금지
 
-try:
-    for i in range(len(collection_list)):
+body = '' # 이메일 본문
+
+
+for i in range(len(collection_list)):
+    try:
+        # 프로그램 시작 측정
+        start_time = time.time()
         target = target_list[i]
         collection = collection_list[i]
         cr.crawling(collection, target, lastpage, dividePages, firstpage) # (콜렉션명,목표, 마지막페이지, (옵션 : 원하는 페이지 분할 개수), (옵션 : 첫 번째 페이지))
@@ -65,9 +69,11 @@ try:
         print('It takes %s seconds completing the crawling and the uploading' % (round(time.time() - start_time,2)))
         print('------------------------------------------------------------------------------')
 
-    email_module.send_email('Crawling Tasks Completed', 'Crawling Tasks Completed')
+        body +=  target + ' / STATUS : SUCCESSFUL / ' +'Total Time Consumed: ' + str(round(time.time() - start_time,2)) + '\n' #하나의 커뮤니티가 성공하면 본문에 상태 추가
+            
+    except:
+        print('FAILED!')
+        body +=  target + ' / STATUS : FAILED!' + '\n' #실패시에도 본문에 실패했다고 추가
 
-except:
-    print('FAILED!')
-    email_module.send_email('Crawling Tasks Failed', 'Crawling Tasks Failed')
-    
+  
+email_module.send_email('Crawling Result ', body) #크롤링 하나 끝날 때마다 메일 보내기 

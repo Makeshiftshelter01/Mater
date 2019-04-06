@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from ruri_connect import ConnectTo
 from ruri_config import Config
 from ruri_etc import CrStatus
+from extract_numbers import extract_numbers_from_link
 from time import sleep
 import math
 import json
@@ -9,6 +10,7 @@ import os
 import re
 
 import platform
+
 
 
 class CrwalingDAO:
@@ -138,20 +140,24 @@ class CrwalingDAO:
                     }
                 ]
             }).sort([('content.idate', -1), ('clink', -1)]).limit(1)  # 중복 체크를 위해 가장 최신 레코드를 가져온다
-            result = [rs for rs in cursor]
-            result = result[0]
-            last_time = result['content']['idate']  # 날짜
+            
+            results = [rs for rs in cursor]
+            
+            last_time = 'Error'
+            
+            result = results[0]
+            clink = result['clink']  # 글 번호 추출을 위한 링크 
             title = result['ctitle']  # 타이틀
 
-            # Mpark 이라면 정규 표현식으로 맨 마지막의 댓글 수 지움
-            if target == 'MPark':
-                title = re.sub(r'.\[.*\]', '', title)
-            # 와이고수는 날짜란에 조회수가 함께 있어서 조회수가 올라가면 매칭이 안됨..
-            elif target == 'ygosu':
-                last_time = re.sub('READ.*', '', last_time)
+            last_time = extract_numbers_from_link(target, clink) # 링크에서 글 번호 추출(이게 마지막 시점)
+          
+            if last_time == 'Error':  # 링크에 문제가 있어 글이 추출 안되는 경우 에러를 일으켜서 해당 커뮤니티 종료
+                print('ERROR!!!: 마지막 자료에서 글 번호를 추출할 수 없습니다. 해당 커뮤니티 크롤링을 종료합니다')
+                raise InterruptedError
+
 
         except IndexError:  # 아예 처음 시작해서 아무것도 없을 때
-            last_time = ''
+            last_time = 'NaN'
             title = ''
 
         conn.m_client.close()

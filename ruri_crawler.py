@@ -7,6 +7,7 @@ import collections
 from news_company import News_company
 from ruri_dao import CrwalingDAO
 from ruri_etc import CrStatus
+from extract_numbers import extract_numbers_from_link
 
 import os  # 파일 및 디렉토리 생성
 import sys
@@ -381,21 +382,8 @@ class WebCrawler:
             errorpass = False  # 재접속 확인
             content_dict = {}
 
-            maybe_duplicate = False # 먼저 upper_page에서 끌어온 제목과 마지막 크롤링한 제목을 맞춰본다
-            
-
-            # 해당 글의 제목(upperpage에서 가져옴)
-            upper_page_title = upper_page_list[2][count_cr - 1]
-
-            # 엠팍의 경우 댓글 수를 빼준다 
-            if target == "MPark":
-                upper_page_title = re.sub(r'.\[.*\]', '', upper_page_title)
-
-            
-
-            # 해당 글의 제목과 마지막 글의 제목이 일치하는지 확인
-            if upper_page_title == last_title:    
-                maybe_duplicate = True  # 맞다면 후에 검사를 위해 True로 변경
+            # 링크에서 글 번호 추출(비교용)
+            content_number = extract_numbers_from_link(target, innerlink)
 
             try:
                 # 접속과 크롤링
@@ -411,10 +399,7 @@ class WebCrawler:
                     tmpstr = ''
                     tmplist = []
                     selected_ir = inner_root.cssselect(keyvalues[j+2])
-                     
-                  
-
-
+    
                     # 해당 행(예를 들어 댓글)에 따른 번호를 넣어준다.
                     for part_html in selected_ir:
                         if j+2 == 9:
@@ -438,23 +423,17 @@ class WebCrawler:
                         elif len(tmplist) > 0:
                             tmpvalue = tmplist
 
-                    # 와이고수 날짜 처리
-                    if (target == 'ygosu' and j+2 == 13):
-                        tmpvalue = re.sub('READ.*','',tmpvalue) # 날짜 비교를 위해 전처리 
-                        
                     # 특수한 사이트 리플을 처리    
                     if (target in special_replies_list and j+2 == 10):
                         tmpvalue = special_replies.get_special_replies(target, innerlink)
 
                     # 중복 발견
-                    if (j+2 == 13 and tmpvalue == last_time and cut_duplicate == None and maybe_duplicate == True): 
-                        
+                  
+                    if (last_time != 'NaN' and content_number <= last_time and cut_duplicate == None): 
                         cut_duplicate = count_cr - 1  # 중복 제거용 인덱스 생성
                         print(
-                            ' \n\n*** 중복 글이 발견되었습니다. 해당 글 이전의 글만 서버에 업로드 후 종료합니다 *** \n')
-                        print('중복 내용: %s %s %s %s\n ' %
-                            (last_time, last_title, part_html.text_content(),upper_page_list[2][count_cr - 1] ))
-                      
+                            ' \n\n*** 크롤링 시점을 지났습니다. 해당 글 이전의 글만 서버에 업로드 후 종료합니다 *** \n')
+           
                         is_duplicate = True
 
 

@@ -148,8 +148,9 @@ class CrwalingDAO:
             result = results[0]
             clink = result['clink']  # 글 번호 추출을 위한 링크 
             title = result['ctitle']  # 타이틀
+            idate = result['content']['idate']
 
-            last_time = extract_numbers_from_link(target, clink) # 링크에서 글 번호 추출(이게 마지막 시점)
+            last_time = extract_numbers_from_link(target, clink, idate) # 링크에서 글 번호 추출(이게 마지막 시점)
           
             if last_time == 'Error':  # 링크에 문제가 있어 글이 추출 안되는 경우 에러를 일으켜서 해당 커뮤니티 종료
                 print('ERROR!!!: 마지막 자료에서 글 번호를 추출할 수 없습니다. 해당 커뮤니티 크롤링을 종료합니다')

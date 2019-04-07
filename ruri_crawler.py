@@ -21,6 +21,7 @@ import random
 # 특수한 리플 추출용
 import special_replies
 
+
 class WebCrawler:
     # 링크정보를 꼬리만 가지고 있을 때, 모든 정보를 합침.
     def adjusthtml_pb_tail(self, part_html, head=""):
@@ -254,10 +255,11 @@ class WebCrawler:
                 # params = {'po' : i-1} #0페이지부터 시작할 수 있도록 i-1
 
             elif target == 'MPark':
-                params = {'p':(i-1)*30+1, 'm':'search','query':'정치', 'select':'spf'}
-            
+                params = {'p': (i-1)*30+1, 'm': 'search',
+                          'query': '정치', 'select': 'spf'}
+
             elif target == 'inven':
-                params = {'p':i}
+                params = {'p': i}
             else:
                 params = {'page': i}
 
@@ -329,22 +331,6 @@ class WebCrawler:
         list_completed_chk = self.cr_pagesinspector(upper_page_list).values()
         print('\n총 수집한 링크 수 : ', list(list_completed_chk)[0])  # 정보
 
-        # 크롤링 백업
-        # 상단에서 백업에 보낼 데이터 리스트에는 상단 페이지를 크롤링하여 얻은
-        # 첫 번째 페이지의 총 수, 최종 인덱스 숫자, 완료여부를 리턴하고 피클에 저장
-        # backupinfo = [first_page, list(list_completed_chk)[0], True]
-
-        # # 백업이 있으면,
-        # if backuploaded != False:
-        #     # 모두 완료되었으면 이미 완성된 크롤링이 남긴 백업으로 파악하고 (backuploaded = [0,0,1,0,1,0,1]), 백업 파일을 새롭게 덮어쓰며
-        #     if (backuploaded[2] == True) and (backuploaded[4] == True) and (backuploaded[6] == True):
-        #         self.cr_backup(backupinfo, True) #상단페이지 백업
-        #     # 그렇지 않으면 백업하지 않음.
-        #     else:
-        #         pass
-        # # 백업이 없으면, 실행
-        # else:
-        #     self.cr_backup(backupinfo, True) #상단페이지 백업
         return list(list_completed_chk)[1]
 
     # 하단 페이지의 정보 크롤링 함수
@@ -362,11 +348,11 @@ class WebCrawler:
         # 변수
         count_cr = 1                    # 현재 진행사항을 파악하기 위한 변수 설정
         cut_duplicate = None            # 중복이 생겼을 때 자르기 위한 변수
-        is_duplicate = False            # 중복이 생겼을 때 나머지 글들을 모두 넘기기 위한 변수 
+        is_duplicate = False            # 중복이 생겼을 때 나머지 글들을 모두 넘기기 위한 변수
         contents_part_list = []         # 컨텐츠용 변수
 
-        # last time은 날짜, 제목 튜플로 넘어오기 때문에 각각 지정 
-        last_title = last_time[1]  
+        # last time은 날짜, 제목 튜플로 넘어오기 때문에 각각 지정
+        last_title = last_time[1]
         last_time = last_time[0]
 
         # 특수 리플용 사이트 리스트
@@ -377,15 +363,16 @@ class WebCrawler:
         for innerlink in upper_page_list[1]:
             status.progressBar(count_cr, len(
                 upper_page_list[1]), 'crawling contents')
-           
+
             # 변수
             errorpass = False  # 재접속 확인
             content_dict = {}
 
             # 링크에서 글 번호 추출(비교용)
-            content_number = extract_numbers_from_link(target, innerlink)
+            content_number = 'NaN' # 초기화
 
             try:
+
                 # 접속과 크롤링
                 inner_res = requests.get(innerlink, headers=headers)
                 inner_html = inner_res.text
@@ -399,7 +386,7 @@ class WebCrawler:
                     tmpstr = ''
                     tmplist = []
                     selected_ir = inner_root.cssselect(keyvalues[j+2])
-    
+
                     # 해당 행(예를 들어 댓글)에 따른 번호를 넣어준다.
                     for part_html in selected_ir:
                         if j+2 == 9:
@@ -408,40 +395,46 @@ class WebCrawler:
                                 continue
 
                             tmplist.append(part_html.get('href'))  # 내부링크
-                        
+
                         else:
                             # 게시글이나 날짜 등은 게시물 내에서 하나 밖에 없기 때문에 리스트가 아닌 일반 변수로 저장
                             if len(selected_ir) < 2:
                                 tmpstr = part_html.text_content()
                             else:
                                 tmplist.append(part_html.text_content())
-                        
-                      
+
                         # tmpvalue가 None일 때 str이 0이되면 리스트가 된다
                         if len(tmpstr) > 0:
                             tmpvalue = tmpstr
                         elif len(tmplist) > 0:
                             tmpvalue = tmplist
 
-                    # 특수한 사이트 리플을 처리    
+                    # 특수한 사이트 리플을 처리
                     if (target in special_replies_list and j+2 == 10):
-                        tmpvalue = special_replies.get_special_replies(target, innerlink)
+                        tmpvalue = special_replies.get_special_replies(
+                            target, innerlink)
 
-                    # 중복 발견
-                  
-                    if (last_time != 'NaN' and content_number <= last_time and cut_duplicate == None): 
+                    # 글 번호 대신 날짜를 쓰는 커뮤니티도 있으므로 비교용 글 번호는 여기에서 설정
+                    if (j+2 == 13):
+                        content_number = extract_numbers_from_link(target, innerlink, tmpvalue)
+                        print(content_number)
+
+                        
+                    if (last_time != 'NaN' and  content_number != 'NaN' and content_number <= last_time and cut_duplicate == None):
                         cut_duplicate = count_cr - 1  # 중복 제거용 인덱스 생성
                         print(
                             ' \n\n*** 크롤링 시점을 지났습니다. 해당 글 이전의 글만 서버에 업로드 후 종료합니다 *** \n')
-           
-                        is_duplicate = True
 
+                        print('현재 글 링크 : %s 현재 글 번호: %s / 마지막 글 번호 : %s' %
+                              (innerlink, content_number, last_time))
+
+                        is_duplicate = True
 
                     # 한 행(댓글 등)이 종료되면, 개별 항목마다 검사하여 fillblanks를 채워준다.
                     Dict_completed_chk = self.cr_pagesinspector(
                         tmpvalue).values()
                     content_dict[keykeys[j+2]] = list(Dict_completed_chk)[1]
-                
+
                 if target == 'FmKorea':
                     sleep(random.random() * 2)
 
@@ -521,12 +514,12 @@ class WebCrawler:
         for i in range(len(contents_part_list)):
             # 게시물 자체 링크(혹시나 그 링크로 다시 돌아가야 될 때 대비(뉴스 컴퍼니 함수에선 현재 비활성화))
             board_link = upper_page_list[1][i]
-         
+
             links_in_content = n_contents_part_list[i]['clinks']  # 게시물 내에
-           
+
             news_company = news.add_news_company(links_in_content, board_link)
             n_contents_part_list[i]['news_company'] = news_company
-           
+
         return n_contents_part_list, is_duplicate
 
     # 구간 세분화 실행
@@ -552,8 +545,8 @@ class WebCrawler:
         keyvalues = list(cvalues.values())
         url = keyvalues[0]  # 접속할 주소 및 기타 접속 정보
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.92 Safari/537.36'}
-        
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Safari/537.36'}
+
         # 중복여부 테스트용
         dao = CrwalingDAO()
         last_time = dao.select_last_time(collection, target)
@@ -566,7 +559,7 @@ class WebCrawler:
 
         # 조정한 페이지 구간 수 만큼 루프
         for i in range(len(pageranges)):
-            
+
             if is_duplicate:
                 print('중복 페이지가 발견되었습니다. %s 의 크롤링을 종료합니다' % target)
                 break
@@ -579,7 +572,7 @@ class WebCrawler:
                 print('It takes %s seconds completing the upper page crawling and the uploading' % (
                     round(u_time - start_time, 2)))
                 print('upper page list ', len(upper_page_list[1]))
-             
+
                 #################################
                 # 2. lower page - 하단 페이지 실행
                 lower_page_list = self.cr_lowerpages(
@@ -621,7 +614,7 @@ class WebCrawler:
                 insertmgdb = CrwalingDAO()
                 insertmgdb.insert(cr, collection)
 
-    def crawling_nvnews(self,collection, target, nsplit, firstpage, lastpage, cvalues):
+    def crawling_nvnews(self, collection, target, nsplit, firstpage, lastpage, cvalues):
         ### 크롤링 시간측정 시작 ####
         start_time = time.time()
         status = CrStatus()

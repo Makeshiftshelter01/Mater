@@ -8,6 +8,7 @@ from news_company import News_company
 from ruri_dao import CrwalingDAO
 from ruri_etc import CrStatus
 from extract_numbers import extract_numbers_from_link
+from proxy_module import get_html_from_proxy
 
 import os  # 파일 및 디렉토리 생성
 import sys
@@ -268,8 +269,11 @@ class WebCrawler:
 
             try:
                 # 접속
-                res = requests.get(url, headers=headers, params=params)
-                html = res.text
+                if target == 'clien':
+                    html = get_html_from_proxy(url, params) # 프록시로 html 가져오기 
+                else:
+                    res = requests.get(url, headers=headers, params=params)
+                    html = res.text
                 root = lxml.html.fromstring(html)
 
                 sleep(0.1)
@@ -374,8 +378,11 @@ class WebCrawler:
             try:
 
                 # 접속과 크롤링
-                inner_res = requests.get(innerlink, headers=headers)
-                inner_html = inner_res.text
+                if target == 'clien':
+                    inner_html = get_html_from_proxy(innerlink) # 프록시로 html 가져오기 
+                else:
+                    inner_res = requests.get(innerlink, headers=headers)
+                    inner_html = inner_res.text
                 inner_root = lxml.html.fromstring(inner_html)
 
                 sleep(0.05)
@@ -417,10 +424,14 @@ class WebCrawler:
                     # 글 번호 대신 날짜를 쓰는 커뮤니티도 있으므로 비교용 글 번호는 여기에서 설정
                     if (j+2 == 13):
                         content_number = extract_numbers_from_link(target, innerlink, tmpvalue)
-                        print(content_number)
 
-                        
-                    if (last_time != 'NaN' and  content_number != 'NaN' and content_number <= last_time and cut_duplicate == None):
+                    if (target == 'ilbe' and j+2 == 13): #일베 날짜 처리용
+                        tmpvalue = re.sub(r'\(.*','', tmpvalue)
+                        tmpvalue = tmpvalue.strip()
+                        print(tmpvalue)
+
+
+                    if (last_time != 'NaN' and  type(content_number) == int and content_number <= last_time and cut_duplicate == None):
                         cut_duplicate = count_cr - 1  # 중복 제거용 인덱스 생성
                         print(
                             ' \n\n*** 크롤링 시점을 지났습니다. 해당 글 이전의 글만 서버에 업로드 후 종료합니다 *** \n')

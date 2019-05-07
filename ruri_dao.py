@@ -12,7 +12,6 @@ import re
 import platform
 
 
-
 class CrwalingDAO:
     # load db info
     def setdbinfo(self, collection):
@@ -26,7 +25,7 @@ class CrwalingDAO:
         config = Config()
         data = config.read_info_in_config('mongoDB')
         cnct = ConnectTo(data[host], int(data['port']),
-                         data['database'], collection)  # 인스턴스화
+                         data['database'], collection, data['username'], data['password'])  # 인스턴스화
         cnct.MongoDB()  # mongoDB 접속, 현재는 mongoDB만 가능하지만 추후 다른 DB도 선택할 수 있도록 변경
         return cnct
 
@@ -134,28 +133,28 @@ class CrwalingDAO:
                         'content.idate': {
                             '$not': {
                                 # cook : 날짜 타입이 배열이 아닌 것. (어떤 날짜든 맨 앞으로 오게 되는 것 방지)
-                                '$type': 'array'  
+                                '$type': 'array'
                             }
                         }
                     }
                 ]
             }).sort([('content.idate', -1), ('clink', -1)]).limit(1)  # 중복 체크를 위해 가장 최신 레코드를 가져온다
-            
+
             results = [rs for rs in cursor]
-            
+
             last_time = 'Error'
-            
+
             result = results[0]
-            clink = result['clink']  # 글 번호 추출을 위한 링크 
+            clink = result['clink']  # 글 번호 추출을 위한 링크
             title = result['ctitle']  # 타이틀
             idate = result['content']['idate']
 
-            last_time = extract_numbers_from_link(target, clink, idate) # 링크에서 글 번호 추출(이게 마지막 시점)
-          
+            last_time = extract_numbers_from_link(
+                target, clink, idate)  # 링크에서 글 번호 추출(이게 마지막 시점)
+
             if last_time == 'Error':  # 링크에 문제가 있어 글이 추출 안되는 경우 에러를 일으켜서 해당 커뮤니티 종료
                 print('ERROR!!!: 마지막 자료에서 글 번호를 추출할 수 없습니다. 해당 커뮤니티 크롤링을 종료합니다')
                 raise InterruptedError
-
 
         except IndexError:  # 아예 처음 시작해서 아무것도 없을 때
             last_time = 'NaN'
@@ -175,7 +174,7 @@ class CrwalingDAO:
         else:
             host = 'lhost'
         cnct = ConnectTo(data[host], int(data['port']),
-                         data['database'], data['collection'])
+                         data['database'], data['collection'], data['username'], data['password'])
         cnct.MongoDB()
         cursor = cnct.m_collection.find({})
 

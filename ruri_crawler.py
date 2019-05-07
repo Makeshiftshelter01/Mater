@@ -360,7 +360,7 @@ class WebCrawler:
         last_time = last_time[0]
 
         # 특수 리플용 사이트 리스트
-        special_replies_list = ['ygosu', 'clien', 'inven', 'theqoo']
+        special_replies_list = ['ygosu','ygosu2', 'clien', 'inven', 'theqoo', 'theqoo2']
 
         status = CrStatus()  # progress bar
         # 수집한 내부링크(게시판)의 수만큼 loop를 돌며 접속

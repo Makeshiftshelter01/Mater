@@ -183,13 +183,17 @@ def get_inven_replies(link):
 
     return inven_replies
 
+
 def get_special_replies(target, link):
     if target == 'ygosu':
+        return get_ygosu_replies(link)
+    elif target == 'ygosu2':
         return get_ygosu_replies(link)
     elif target == 'clien':
         return get_clien_replies(link)
     elif target == 'theqoo':
         return get_theqoo_replies(link)
+    elif target == 'theqoo2':
+        return get_theqoo_replies(link)
     elif target == 'inven':
         return get_inven_replies(link)
-        

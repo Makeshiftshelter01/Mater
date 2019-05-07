@@ -36,7 +36,7 @@ def extract_ygosu_number(link, idate):
 
 
 def extract_ygosu2_number(link, idate):
-    post_number = re.sub(r'.*?free/', '', link)
+    post_number = re.sub(r'.*?yeobgi/', '', link)
     post_number = re.sub(r'/\?.*', '', post_number)
     return post_number
 

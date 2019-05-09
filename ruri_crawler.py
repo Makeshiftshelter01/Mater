@@ -270,7 +270,7 @@ class WebCrawler:
             try:
                 # 접속
                 if target == 'clien':
-                    html = get_html_from_proxy(url, params) # 프록시로 html 가져오기 
+                    html = get_html_from_proxy(url, params)  # 프록시로 html 가져오기
                 else:
                     res = requests.get(url, headers=headers, params=params)
                     html = res.text
@@ -360,7 +360,8 @@ class WebCrawler:
         last_time = last_time[0]
 
         # 특수 리플용 사이트 리스트
-        special_replies_list = ['ygosu','ygosu2', 'clien', 'inven', 'theqoo', 'theqoo2']
+        special_replies_list = ['ygosu', 'ygosu2',
+                                'clien', 'inven', 'theqoo', 'theqoo2']
 
         status = CrStatus()  # progress bar
         # 수집한 내부링크(게시판)의 수만큼 loop를 돌며 접속
@@ -373,13 +374,14 @@ class WebCrawler:
             content_dict = {}
 
             # 링크에서 글 번호 추출(비교용)
-            content_number = 'NaN' # 초기화
+            content_number = 'NaN'  # 초기화
 
             try:
 
                 # 접속과 크롤링
                 if target == 'clien':
-                    inner_html = get_html_from_proxy(innerlink) # 프록시로 html 가져오기 
+                    inner_html = get_html_from_proxy(
+                        innerlink)  # 프록시로 html 가져오기
                 else:
                     inner_res = requests.get(innerlink, headers=headers)
                     inner_html = inner_res.text
@@ -423,15 +425,20 @@ class WebCrawler:
 
                     # 글 번호 대신 날짜를 쓰는 커뮤니티도 있으므로 비교용 글 번호는 여기에서 설정
                     if (j+2 == 13):
-                        content_number = extract_numbers_from_link(target, innerlink, tmpvalue)
+                        content_number = extract_numbers_from_link(
+                            target, innerlink, tmpvalue)
 
-                    if (target == 'ilbe' and j+2 == 13): #일베 날짜 처리용
-                        tmpvalue = re.sub(r'\(.*','', tmpvalue)
+                    if (target == 'ilbe' and j+2 == 13):  # 일베 날짜 처리용
+                        tmpvalue = re.sub(r'\(.*', '', tmpvalue)
                         tmpvalue = tmpvalue.strip()
-                        print(tmpvalue)
 
+                    elif (target == 'ppomppu' and j+2 == 13):  # 뽐뿌 날짜 처리용
+                        tmpvalue = ' '.join(tmpvalue.split())
+                        tmpvalue = re.sub('.*등록일:', '', tmpvalue)
+                        tmpvalue = re.sub('조회수.*', '', tmpvalue)
+                        tmpvalue = tmpvalue.strip()
 
-                    if (last_time != 'NaN' and  type(content_number) == int and content_number <= last_time and cut_duplicate == None):
+                    if (last_time != 'NaN' and type(content_number) == int and content_number <= last_time and cut_duplicate == None):
                         cut_duplicate = count_cr - 1  # 중복 제거용 인덱스 생성
                         print(
                             ' \n\n*** 크롤링 시점을 지났습니다. 해당 글 이전의 글만 서버에 업로드 후 종료합니다 *** \n')

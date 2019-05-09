@@ -59,6 +59,13 @@ def extract_inven_number(link, idate):
     post_number = re.sub(r'\?.*', '', post_number)
     return post_number
 
+
+def extract_ppomppu_number(link, idate):
+    post_number = re.sub('.*no=', '', link)
+
+    return post_number
+
+
 # 링크에서 글 번호 추출
 
 
@@ -73,7 +80,8 @@ def extract_numbers_from_link(target, link, idate='0'):
         'theqoo': extract_theqoo_number,
         'ruriweb': extract_ruri_number,
         'inven': extract_inven_number,
-        'theqoo2': extract_theqoo_number
+        'theqoo2': extract_theqoo_number,
+        'ppomppu': extract_ppomppu_number
     }
 
     target_function = methods[target]

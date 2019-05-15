@@ -425,9 +425,11 @@ class WebCrawler:
 
                     # 글 번호 대신 날짜를 쓰는 커뮤니티도 있으므로 비교용 글 번호는 여기에서 설정
                     if (j+2 == 13):
-                        content_number = extract_numbers_from_link(
-                            target, innerlink, tmpvalue)
-
+                        try:
+                            content_number = extract_numbers_from_link(
+                                target, innerlink, tmpvalue)
+                        except:
+                            content_number = 'NaN'
                     if (target == 'ilbe' and j+2 == 13):  # 일베 날짜 처리용
                         tmpvalue = re.sub(r'\(.*', '', tmpvalue)
                         tmpvalue = tmpvalue.strip()
@@ -437,6 +439,21 @@ class WebCrawler:
                         tmpvalue = re.sub('.*등록일:', '', tmpvalue)
                         tmpvalue = re.sub('조회수.*', '', tmpvalue)
                         tmpvalue = tmpvalue.strip()
+
+                    elif (target == 'dogdrip' and j+2 == 13):  # 개드립 날짜 처리용
+
+                        if ('시간' in tmpvalue) or ('분' in tmpvalue) or ('초' in tmpvalue):
+                            tmpvalue = datetime.datetime.today().strftime('%Y.%m.%d')
+                        elif ('일' in tmpvalue):
+                            day_difference = int(
+                                re.sub('[^0-9]', '', tmpvalue))
+
+                            today = datetime.datetime.today()
+                            new_date = today - \
+                                datetime.timedelta(day_difference)
+
+                            tmpvalue = datetime.datetime.strftime(
+                                new_date, '%Y.%m.%d')
 
                     if (last_time != 'NaN' and type(content_number) == int and content_number <= last_time and cut_duplicate == None):
                         cut_duplicate = count_cr - 1  # 중복 제거용 인덱스 생성

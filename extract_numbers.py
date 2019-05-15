@@ -66,6 +66,11 @@ def extract_ppomppu_number(link, idate):
     return post_number
 
 
+def extract_dogdrip_number(link, idate):
+    post_number = re.sub(r'.*net/', '', link)
+
+    return post_number
+
 # 링크에서 글 번호 추출
 
 
@@ -81,7 +86,8 @@ def extract_numbers_from_link(target, link, idate='0'):
         'ruriweb': extract_ruri_number,
         'inven': extract_inven_number,
         'theqoo2': extract_theqoo_number,
-        'ppomppu': extract_ppomppu_number
+        'ppomppu': extract_ppomppu_number,
+        'dogdrip': extract_dogdrip_number
     }
 
     target_function = methods[target]

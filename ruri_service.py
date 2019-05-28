@@ -25,13 +25,13 @@ class Crawling:
 
     # 크롤링
     # 페이지 나누는 것, 첫 번째 페이지 설정은 옵션.
-    def crawling(self, target, lastpage, nsplit=1, firstpage=1):
+    def crawling(self, collection, target, lastpage, nsplit=1, firstpage=1):
         # 변수
         result = None
         
         ##### 세팅 정보
         ctargetdata = self.setcsstags(target) #크롤링 하기 위한 타겟 사이트의 필수 데이터 호출
-        
+       
         ##### 실행 및 결과 호출
         wc = WebCrawler() #웹 크롤러 기능 활성화
         # 페이지 분할 조건
@@ -43,12 +43,14 @@ class Crawling:
             # 크롤링 & insert
             # 목표가 네이버 뉴스일 경우
             if target == 'navernews':
-                wc.crawling_nvnews(target, nsplit, firstpage, lastpage, ctargetdata)
-            # 커뮤니티일 경우
+                wc.crawling_nvnews(collection, target, nsplit, firstpage, lastpage, ctargetdata)
+            
             elif target == 'natepann':
-                wc.crawling_natepann(target, nsplit, firstpage, lastpage, ctargetdata)
+                wc.crawling_natepann(collection, target, nsplit, firstpage, lastpage, ctargetdata)
+            
+            # 커뮤니티일 경우
             else:
-                wc.crawlingpostslittle(target, nsplit, firstpage, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
+                wc.crawlingpostslittle(collection, target, nsplit, firstpage, lastpage, ctargetdata) #크롤링 실행 및 결과를 변수에 담음
         else:
             print('잘못 입력')
             sys.exit()

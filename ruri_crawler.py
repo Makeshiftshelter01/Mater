@@ -270,6 +270,7 @@ class WebCrawler:
             try:
                 # 접속
                 if target == 'clien':
+                    print('프록시로 접속합니다')
                     html = get_html_from_proxy(url, params)  # 프록시로 html 가져오기
                 else:
                     res = requests.get(url, headers=headers, params=params)
@@ -361,7 +362,7 @@ class WebCrawler:
 
         # 특수 리플용 사이트 리스트
         special_replies_list = ['ygosu', 'ygosu2',
-                                'clien', 'inven', 'theqoo', 'theqoo2']
+                                'clien', 'inven', 'theqoo', 'theqoo2', 'ilbe']
 
         status = CrStatus()  # progress bar
         # 수집한 내부링크(게시판)의 수만큼 loop를 돌며 접속
@@ -431,9 +432,9 @@ class WebCrawler:
                         except:
                             content_number = 'NaN'
                     if (target == 'ilbe' and j+2 == 13):  # 일베 날짜 처리용
-                        tmpvalue = re.sub(r'\(.*', '', tmpvalue)
+                        tmpvalue = re.sub('-', '.', tmpvalue)
                         tmpvalue = tmpvalue.strip()
-
+                        print(tmpvalue)
                     elif (target == 'ppomppu' and j+2 == 13):  # 뽐뿌 날짜 처리용
                         tmpvalue = ' '.join(tmpvalue.split())
                         tmpvalue = re.sub('.*등록일:', '', tmpvalue)
@@ -503,6 +504,8 @@ class WebCrawler:
                 print('%s 오류로 다음 페이지에서 재접속' % e)
                 # 내용이 비어 있다면 채우고 각 게시글의 내용, 링크, 댓글 등을 딕셔너리에 저장
                 # 해당 페이지의 정보를 모두 blank 채우고 다음페이지 호출
+            except:
+                errorpass = True
 
             finally:
                 # 만일 에러가났다면,

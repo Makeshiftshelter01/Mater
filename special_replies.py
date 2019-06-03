@@ -99,6 +99,28 @@ def get_clien_replies(link):
 
     return clien_replies
 
+def get_ilbe_replies(link):
+    try:
+        board_number = re.sub('.*view/', '', link)
+        board_number = re.sub(r'\?page.*', '', board_number)
+
+
+        comment_link = 'http://www.ilbe.com/commentlist/'+board_number +'?page=0' 
+
+        # 일베는 겟 방식으로
+        res = requests.get(comment_link)
+        html = res.text
+        parsed_html = lxml.html.fromstring(html)
+
+        # 파싱한 것은 리플 가져오는 함수로 보내기
+        ilbe_replies = get_replies_from_parsed_html(
+            parsed_html.cssselect('span.cmt'))
+
+    except:
+        # 에러가 뜨면 요청이 비어있어서 그런 것(리플이 없는 것)이므로 빈 것으로 반환
+        ilbe_replies = ''
+
+    return ilbe_replies
 
 def get_theqoo_replies(link):
     try:
@@ -197,3 +219,5 @@ def get_special_replies(target, link):
         return get_theqoo_replies(link)
     elif target == 'inven':
         return get_inven_replies(link)
+    elif target == 'ilbe':
+        return get_ilbe_replies(link)

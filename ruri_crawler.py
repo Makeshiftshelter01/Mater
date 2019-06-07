@@ -434,7 +434,10 @@ class WebCrawler:
                     if (target == 'ilbe' and j+2 == 13):  # 일베 날짜 처리용
                         tmpvalue = re.sub('-', '.', tmpvalue)
                         tmpvalue = tmpvalue.strip()
-                        print(tmpvalue)
+
+                    elif (target == 'cook' and j+2 == 13):  # 쿡 날짜 처리용(공백 제거)
+                        tmpvalue = tmpvalue.strip()
+
                     elif (target == 'ppomppu' and j+2 == 13):  # 뽐뿌 날짜 처리용
                         tmpvalue = ' '.join(tmpvalue.split())
                         tmpvalue = re.sub('.*등록일:', '', tmpvalue)

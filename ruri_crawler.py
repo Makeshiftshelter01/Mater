@@ -271,7 +271,8 @@ class WebCrawler:
                 # 접속
                 if target == 'clien':
                     print('프록시로 접속합니다')
-                    html = get_html_from_proxy(url, params)  # 프록시로 html 가져오기
+                    html = get_html_from_proxy(url, 'none', params)[
+                        0]  # 프록시로 html 가져오기
                 else:
                     res = requests.get(url, headers=headers, params=params)
                     html = res.text
@@ -366,6 +367,9 @@ class WebCrawler:
 
         status = CrStatus()  # progress bar
         # 수집한 내부링크(게시판)의 수만큼 loop를 돌며 접속
+
+        succeededIp = 'none'
+       
         for innerlink in upper_page_list[1]:
             status.progressBar(count_cr, len(
                 upper_page_list[1]), 'crawling contents')
@@ -378,11 +382,13 @@ class WebCrawler:
             content_number = 'NaN'  # 초기화
 
             try:
-
                 # 접속과 크롤링
                 if target == 'clien':
-                    inner_html = get_html_from_proxy(
-                        innerlink)  # 프록시로 html 가져오기
+                    result = get_html_from_proxy(
+                        innerlink, succeededIp)  # 프록시로 html 가져오기
+                    inner_html = result[0]
+                    succeededIp = result[1]
+
                 else:
                     inner_res = requests.get(innerlink, headers=headers)
                     inner_html = inner_res.text
@@ -436,6 +442,9 @@ class WebCrawler:
                         tmpvalue = tmpvalue.strip()
 
                     elif (target == 'cook' and j+2 == 13):  # 쿡 날짜 처리용(공백 제거)
+                        tmpvalue = tmpvalue.strip()
+
+                    elif (target == 'clien' and j+2 == 13):  # 클리앙 날짜 처리용(공백 제거)
                         tmpvalue = tmpvalue.strip()
 
                     elif (target == 'ppomppu' and j+2 == 13):  # 뽐뿌 날짜 처리용

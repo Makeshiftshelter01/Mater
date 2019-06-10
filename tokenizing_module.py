@@ -1,3 +1,4 @@
+
 import configparser
 import os
 from pymongo import MongoClient
@@ -10,11 +11,10 @@ import pandas as pd
 from threading import Thread
 import jpype
 import datetime
+import email_module
 
 
 def comm_date(comm_name, dates_array, comm_name2):
-
-    jpype.attachThreadToJVM()  # 쓰레드 하나당 JVM을 할당하기 위한 메소드
 
     for dates in dates_array:
 
@@ -126,7 +126,7 @@ def comm_date(comm_name, dates_array, comm_name2):
             mongoDict = {}
             mongoDict['date'] = dates
             mongoDict['token'] = token
-            #mongoDict['link'] = link
+            # mongoDict['link'] = link
 
             doc_id = collection.insert_one(mongoDict).inserted_id
 
@@ -135,110 +135,45 @@ def comm_date(comm_name, dates_array, comm_name2):
         client.close()
 
 
-def do_multi_thread_job(comm_name, date_array, comm_name2):
-    # date_array를 쪼개기 위해 나눔
-    array_split_section1 = (int(len(date_array) * (1/8)))
-    array_split_section2 = (int(len(date_array) * (2/8)))
-    array_split_section3 = (int(len(date_array) * (3/8)))
-    array_split_section4 = (int(len(date_array) * (4/8)))
-    array_split_section5 = (int(len(date_array) * (5/8)))
-    array_split_section6 = (int(len(date_array) * (6/8)))
-    array_split_section7 = (int(len(date_array) * (7/8)))
+# config 파일 읽기
+config = configparser.ConfigParser()
+config_file = os.path.join(os.path.dirname(__file__), 'config.ini')
+config.read(config_file)
 
-    # 쓰레드 선언
-    t1 = Thread(target=comm_date,
-                args=(comm_name,
-                      date_array[0:array_split_section1],
-                      comm_name2))
+# 날짜 레인지 설정
+yesterday = datetime.datetime.today() - datetime.timedelta(1)
+weekago = datetime.datetime.today() - datetime.timedelta(7)
 
-    t2 = Thread(target=comm_date,
-                args=(comm_name,
-                      date_array[array_split_section1:array_split_section2],
-                      comm_name2))
+# 날짜 스트링으로 변환
+yesterday_string = datetime.datetime.strftime(yesterday, '%Y-%m-%d')
+weekago_string = datetime.datetime.strftime(weekago, '%Y-%m-%d')
 
-    t3 = Thread(target=comm_date,
-                args=(comm_name,
-                      date_array[array_split_section2:array_split_section3],
-                      comm_name2))
-    t4 = Thread(target=comm_date,
-                args=(comm_name,
-                      date_array[array_split_section3:array_split_section4],
-                      comm_name2))
+# 년도 판별을 위해 연도만 따로 추출
+yesterday_year_only = datetime.datetime.strftime(yesterday, '%Y')
 
-    t5 = Thread(target=comm_date,
-                args=(comm_name,
-                      date_array[array_split_section4:array_split_section5],
-                      comm_name2))
-    t6 = Thread(target=comm_date,
-                args=(comm_name,
-                      date_array[array_split_section5:array_split_section6],
-                      comm_name2))
-    t7 = Thread(target=comm_date,
-                args=(comm_name,
-                      date_array[array_split_section6:array_split_section7],
-                      comm_name2))
-
-    t8 = Thread(target=comm_date,
-                args=(comm_name,
-                      date_array[array_split_section7:len(date_array)],
-                      comm_name2))
-
-    # 쓰레드 시작
-    t1.start()
-    t2.start()
-    t3.start()
-    t4.start()
-    t5.start()
-    t6.start()
-    t7.start()
-    t8.start()
-
-    # 쓰레드가 끝나면 닫기
-    t1.join()
-    t2.join()
-    t3.join()
-    t4.join()
-    t5.join()
-    t6.join()
-    t7.join()
-    t8.join()
+# 사전 선언
+twitter = Twitter()
 
 
-if __name__ == '__main__':  # 멀티 쓰레드, 멀티 프로세싱에서는 __name__=='__main__' 부분이 꼭 필요하다고 함
+coll_list = [
+    {'name': 'realclien', 'dot_date': False, 'target': 'realclien'},
+    {'name': 'ilbe', 'dot_date': True, 'target': 'realilbe'},
 
-    # config 파일 읽기
-    config = configparser.ConfigParser()
-    config_file = os.path.join(os.path.dirname(__file__), 'config.ini')
-    config.read(config_file)
+    {'name': 'realcook', 'dot_date': False, 'target': 'realcook'},
+    {'name': 'realmlbpark', 'dot_date': False, 'target': 'realmlbpark'},
+    {'name': 'ruri', 'dot_date': True, 'target': 'realruli'},
+    {'name': 'ygosu2', 'dot_date': False, 'target': 'realygosu2'}
+]
 
-    # 날짜 레인지 설정
-    yesterday = datetime.datetime.today() - datetime.timedelta(1)
-    weekago = datetime.datetime.today() - datetime.timedelta(14)
 
-    # 날짜 스트링으로 변환
-    yesterday_string = datetime.datetime.strftime(yesterday, '%Y-%m-%d')
-    weekago_string = datetime.datetime.strftime(weekago, '%Y-%m-%d')
+body = ''  # 이메일 본문
+for coll in coll_list:
+    try:
 
-    # 년도 판별을 위해 연도만 따로 추출
-    yesterday_year_only = datetime.datetime.strftime(yesterday, '%Y')
-
-    # 사전 선언
-    twitter = Twitter()
-
-    st = time.time()
-
-    coll_list = [
-        {'name': 'ilbe', 'dot_date': True, 'target': 'realilbe'},
-        {'name': 'realclien', 'dot_date': False, 'target': 'realclien'},
-        {'name': 'realcook', 'dot_date': False, 'target': 'realcook'},
-        {'name': 'realmlbpark', 'dot_date': False, 'target': 'realmlbpark'},
-        {'name': 'ruri', 'dot_date': True, 'target': 'realruli'},
-        {'name': 'ygosu2', 'dot_date': False, 'target': 'realygosu2'}
-    ]
-
-    for coll in coll_list:
+        start_time = time.time()
         # 날짜 배열 생성
         date = pd.date_range(weekago_string, yesterday_string)
+
         date_array = list(date.astype('str'))
 
         # 커뮤니티의 날짜가 -가 아닌 .으로 들어가는 커뮤니티는 치환해서 이용
@@ -249,18 +184,17 @@ if __name__ == '__main__':  # 멀티 쓰레드, 멀티 프로세싱에서는 __n
                 dot_form = re.sub('\-', '.', date_array[i])
                 date_array2.append(dot_form)
             date_array = date_array2
+
         comm_name = coll['name']
         comm_name2 = ('%s_%s' % (coll['target'], yesterday_year_only))
 
-        # ---------
-        print('-------------------------')
-        print('Community Name : ', comm_name)
-        print(date_array)
-        print('target_name', comm_name2)
-        print('-------------------------')
-        
-        do_multi_thread_job(comm_name, date_array, comm_name2)
+        comm_date(comm_name, date_array, comm_name2)
+        body += coll['name'] + ' / STATUS : SUCCESSFUL / ' + 'Total Time Consumed: ' + \
+            str(round(time.time() - start_time, 2)) + \
+            '\n'  # 하나의 커뮤니티가 성공하면 본문에 상태 추가
+    except:
+        print('FAILED!')
+        body += coll['name'] + ' / STATUS : FAILED!' + \
+            '\n'  # 실패시에도 본문에 실패했다고 추가
 
-    et = time.time() - st
-
-    print('Total Time : %s' % et)
+email_module.send_email('Tokenizing Result ', body)  # 크롤링 하나 끝날 때마다 메일 보내기

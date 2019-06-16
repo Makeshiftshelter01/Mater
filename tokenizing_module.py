@@ -142,7 +142,7 @@ config.read(config_file)
 
 # 날짜 레인지 설정
 yesterday = datetime.datetime.today() - datetime.timedelta(1)
-weekago = datetime.datetime.today() - datetime.timedelta(7)
+weekago = datetime.datetime.today() - datetime.timedelta(30)
 
 # 날짜 스트링으로 변환
 yesterday_string = datetime.datetime.strftime(yesterday, '%Y-%m-%d')

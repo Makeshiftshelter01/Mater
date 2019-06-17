@@ -112,7 +112,7 @@ def comm_date(comm_name, dates_array, tablename):
         for word, freq in wc.most_common(200000):
             if len(word) >= 2:
 
-                word_list.append(word)
+                word_list.append(word[:29])  # 미친 단어들이 좀 있어서 29개에서 커트
                 freq_list.append(freq)
 
         time2 = time.time() - start_time
@@ -168,7 +168,7 @@ config.read(config_file)
 
 # 날짜 레인지 설정
 yesterday = datetime.datetime.today() - datetime.timedelta(1)
-weekago = datetime.datetime.today() - datetime.timedelta(30)
+weekago = datetime.datetime.today() - datetime.timedelta(7)
 
 # 날짜 스트링으로 변환
 yesterday_string = datetime.datetime.strftime(yesterday, '%Y-%m-%d')
@@ -179,13 +179,14 @@ yesterday_year_only = datetime.datetime.strftime(yesterday, '%Y')
 
 
 target_list = [
+    {'comm_name': 'realygosu2', 'table_name': 'YGOSU2'},
     {'comm_name': 'realclien', 'table_name': 'CLIEN'},
     {'comm_name': 'realilbe', 'table_name': 'ILBE'},
 
     {'comm_name': 'realcook', 'table_name': 'COOK'},
     {'comm_name': 'realmlbpark', 'table_name': 'MLBPARK'},
-    {'comm_name': 'realruli', 'table_name': 'RULI'},
-    {'comm_name': 'realygosu2', 'table_name': 'YGOSU2'}
+    {'comm_name': 'realruli', 'table_name': 'RULI'}
+
 ]
 
 

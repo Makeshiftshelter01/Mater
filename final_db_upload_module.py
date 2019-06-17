@@ -289,7 +289,7 @@ config.read(config_file)
 
 # 날짜 레인지 설정
 yesterday = datetime.datetime.today() - datetime.timedelta(1)
-weekago = datetime.datetime.today() - datetime.timedelta(30)
+weekago = datetime.datetime.today() - datetime.timedelta(7)
 
 # 날짜 스트링으로 변환
 yesterday_string = datetime.datetime.strftime(yesterday, '%Y-%m-%d')
@@ -299,7 +299,7 @@ weekago_string = datetime.datetime.strftime(weekago, '%Y-%m-%d')
 yesterday_year_only = datetime.datetime.strftime(yesterday, '%Y')
 
 # date = pd.date_range(weekago_string, yesterday_string)
-date = pd.date_range('2019-04-06', '2019-05-28')
+date = pd.date_range(weekago_string, yesterday_string)
 
 
 date_array = list(date.astype('str'))
@@ -308,7 +308,7 @@ date_array = list(date.astype('str'))
 valid_date_array = check_duplicate_date(date_array)
 
 print('valid date checked')
-
+print(valid_date_array)
 final_df_obj = {
 
 }

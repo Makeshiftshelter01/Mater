@@ -130,7 +130,8 @@ def comm_date(comm_name, dates_array, comm_name2):
 
             doc_id = collection.insert_one(mongoDict).inserted_id
 
-            print('no.', i+1, 'inserted id in mongodb : ', doc_id)
+            print('no.', i+1, 'inserted id in mongodb : ',
+                  doc_id, 'community : ', comm_name)
 
         client.close()
 

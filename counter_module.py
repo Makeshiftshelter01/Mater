@@ -48,7 +48,7 @@ def comm_date(comm_name, dates_array, tablename):
 
         start_time = time.time()
 
-        print(dates, 'is in process')
+        print('community: ', comm_name, dates, 'is in process')
 
         # 몽고디비 연결 글라이언트 생성
         mongodb2_info = config['mongoDB2']

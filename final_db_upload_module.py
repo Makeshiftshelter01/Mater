@@ -200,7 +200,7 @@ def do_main_job(start_date, end_date, tablename, comm_name):
 
         endtime = time.time()
 
-        print(i, endtime-starttime)
+        print(comm_name, i, endtime-starttime)
 
     word1 = []
     word2 = []

@@ -1,6 +1,10 @@
 from ruri_dao import CrwalingDAO
 from ckonlpy.tag import Twitter
 import re
+import configparser
+from pymongo import MongoClient
+import mongo_proxy
+import os
 
 # 사전 초기화 및 단어 추가
 twitter = Twitter()
@@ -18,18 +22,22 @@ nick_list = ['문재앙', '문제인', '문죄인', '문재해', '문재지변',
 for nick in nick_list:
     twitter.add_dictionary(nick, 'Noun')
 
+config = configparser.ConfigParser()
+config_file = os.path.join(os.path.dirname(__file__), 'config.ini')
+config.read(config_file)
+
 
 def get_random_samples(collection, sample_count, title_lists, content_lists, doc_with_moon_count):
 
     dao = CrwalingDAO()
     conn = dao.setdbinfo(collection)
-    conn.m_client.close()
+
     cursor = conn.m_collection.aggregate([
         {
             '$sample': {'size': sample_count}
         }
     ])
-
+    conn.m_client.close()
     for doc in cursor:
 
         # check if this doc contains any of Moon's nickname
@@ -146,7 +154,34 @@ def do_main_process(collection, iteration, sample_count):
     return final_value
 
 
-value = do_main_process('realclien', 30, 100)
+def db_upload(comm_name, value):
+    mongodb1_info = config['mongoDB']
+    client = mongo_proxy.MongoProxy(
+        MongoClient(('mongodb://%s:%s@%s:%s' % (mongodb1_info['username'], mongodb1_info['password'], mongodb1_info['host'], mongodb1_info['port']))))
+
+    db = client[mongodb1_info['database']]
+
+    # 컬렉션 객체 가져오기
+    comm = db['weights']
+    comm.insert_one({'name': comm_name, 'value': value})
+    client.close()
 
 
-print(0.0012 / value)
+target_list = [
+    {'coll': 'ilbe', 'name': 'ilbe'},
+    {'coll': 'realclien', 'name': 'clien'},
+    {'coll': 'realmlbpark', 'name': 'mlbpark'},
+    {'coll': 'realcook', 'name': 'cook'},
+    {'coll': 'ygosu2', 'name': 'ygosu'},
+    {'coll': 'ruri', 'name': 'ruli'},
+
+]
+
+
+for target in target_list:
+    value = do_main_process(target['coll'], 30, 200)
+
+    db_upload(target['name'], value)
+    print(target['name'], 'finished and uploaded')
+
+print('done')

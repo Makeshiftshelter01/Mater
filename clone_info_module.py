@@ -57,19 +57,6 @@ def get_word_filtered_data(where, tablename, conn, start_date, end_date):
     return df2
 
 
-def get_all_query(tablename, start_date, end_date, conn):
-    query = "select dates as mydate, sum(freq) as w_count, (select sum(freq) from "+tablename+" where (dates = mydate) and word in ('문재인', '문대통령', '문정부', '문프', '문통','문재앙', '문제인', '문죄인', '문재해', '문재지변', '화재인', '문근혜', '문구라', '문벌구', '문구라', '문찐따', '문재인조', '쇼통령', '곡재인', '쩝쩝이', '문쩝쩝', '문보궐', '문변태', '문치매', '문치맥', '문등쉰', '문각기동대', '문혼밥', '문틀딱', '문정은', '문북한', '문쪼다', '문저리','문어벙','문오다리','문고구마', '먼저인', '문틀러', '문주주의', '문벌레',  '문노스',  '미세문지', '재앙이', '문제아', '문세먼지', '재앙 ','젠틀재인','문바마', '문깨끗','파파미','왕수석','negotiator','달님','문프','명왕','재인리','금괴왕')) as m_count, (select sum(freq) from " + \
-        tablename+" where (dates =mydate ) and word in ('문재앙', '문제인', '문죄인', '문재해', '문재지변', '화재인', '문근혜', '문구라', '문벌구', '문구라', '문찐따', '문재인조', '쇼통령', '곡재인', '쩝쩝이', '문쩝쩝', '문보궐', '문변태', '문치매', '문치맥', '문등쉰', '문각기동대', '문혼밥', '문틀딱', '문정은', '문북한', '문쪼다', '문저리','문어벙','문오다리','문고구마', '먼저인', '문틀러', '문주주의', '문벌레',  '문노스',  '미세문지', '재앙이', '문제아', '문세먼지',  '재앙')) as anti_count from " + \
-        tablename + \
-            " where (dates between %s and %s) group by dates"
-    cursor = conn.cursor()
-    cursor.execute(query, (start_date, end_date))
-    df = cursor.fetchall()
-
-    # param = {"start_date": start_date, "end_date": end_date}
-    # df = pd.read_sql_query(query, conn, params=param)
-    return df
-
 # ----------------------------------------------------------------------
 
 
@@ -83,17 +70,6 @@ def get_most_common_words(tablename,  valid_date, conn):
     df = pd.read_sql_query(SQL, conn, params=param)
 
     return df
-
-    # query = "SELECT * FROM " + tablename + \
-    #     " where dates = %s ORDER by freq DESC LIMIT 100"
-
-    # # pd.read_sql_query를 통해 df데이터프레임에 JS_IDX 테이블 넣어줌
-    # # df = pd.read_sql_query(query, conn)
-    # cursor = conn.cursor()
-    # cursor.execute(query, (valid_date))
-    # df = cursor.fetchall()
-
-    # return df
 
 
 def check_duplicate_date(comm_name, date_array):
@@ -214,6 +190,28 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name):
 
     filltered_df[filltered_df.anti_ratio > 1]
 
+    # 페미 빈도 가져오기 ----------------------------------------
+    sql = " where word in ('한남', '페미')  and dates between %(date1)s and %(date2)s"
+
+    conn = engine.connect()
+    df = get_word_filtered_data(sql, tablename, conn, start_date, end_date)
+    conn.close()
+
+    dates = list(df.dates.astype('str'))
+    freq = list(df.freq)
+    new_freq = []
+
+    for i in range(len(rawdate)):
+        if rawdate[i] not in dates:
+            new_freq.append(0)
+        else:
+            idx = dates.index(rawdate[i])
+            new_freq.append(freq[idx])
+
+    filltered_df['femi_count'] = new_freq
+
+    filltered_df['femi_ratio'] = filltered_df.femi_count/filltered_df.w_count
+
     array_for_community = []
     for i in range(len(filltered_df)):
         dict_for_date = {}
@@ -227,6 +225,8 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name):
         dict_for_date['m_count'] = int(filltered_df['m_count'][i])
         dict_for_date['anti_count'] = int(filltered_df['anti_count'][i])
         dict_for_date['anti_ratio'] = float(filltered_df['anti_ratio'][i])
+        dict_for_date['femi_count'] = int(filltered_df['femi_count'][i])
+        dict_for_date['femi_ratio'] = float(filltered_df['femi_ratio'][i])
         dict_for_date['popularity'] = float(filltered_df['popularity'][i])
 
         array_for_community.append(dict_for_date)
@@ -289,8 +289,9 @@ weekago_string = datetime.datetime.strftime(weekago, '%Y-%m-%d')
 # 년도 판별을 위해 연도만 따로 추출
 yesterday_year_only = datetime.datetime.strftime(yesterday, '%Y')
 
-# date = pd.date_range(weekago_string, yesterday_string)
 date = pd.date_range(weekago_string, yesterday_string)
+# date = pd.date_range('2017-05-01', '2017-05-31')
+# yesterday_year_only = '2017'
 
 date_array = list(date.astype('str'))
 
@@ -300,31 +301,31 @@ print('main process started')
 body = ''  # 이메일 본문
 for target in target_list:
     start_time = time.time()
-    # try:
+    try:
 
-    # 날짜 레인지가 올바른지 체크 및 리턴 받은 날짜 레인지 사용
-    valid_date_array = check_duplicate_date(
-        target['comm_name'], date_array)
+        # 날짜 레인지가 올바른지 체크 및 리턴 받은 날짜 레인지 사용
+        valid_date_array = check_duplicate_date(
+            target['comm_name'], date_array)
 
-    if (len(valid_date_array) == 0):
-        print('All cloned, exiting process')
-        continue
+        if (len(valid_date_array) == 0):
+            print('All cloned, exiting process')
+            continue
 
-    print('valid date checked')
-    print(target['comm_name'], 'in progress')
-    tablename = '%s_%s' % (target['table_name'], yesterday_year_only)
-    do_main_job(
-        valid_date_array,
-        valid_date_array[0], valid_date_array[-1], tablename, target['comm_name'])
+        print('valid date checked')
+        print(target['comm_name'], 'in progress')
+        tablename = '%s_%s' % (target['table_name'], yesterday_year_only)
+        do_main_job(
+            valid_date_array,
+            valid_date_array[0], valid_date_array[-1], tablename, target['comm_name'])
 
-    body += target['comm_name'] + ' / STATUS : SUCCESSFUL / ' + 'Total Time Consumed: ' + \
-        str(round(time.time() - start_time, 2)) + \
-        '\n'  # 하나의 커뮤니티가 성공하면 본문에 상태 추가
+        body += target['comm_name'] + ' / STATUS : SUCCESSFUL / ' + 'Total Time Consumed: ' + \
+            str(round(time.time() - start_time, 2)) + \
+            '\n'  # 하나의 커뮤니티가 성공하면 본문에 상태 추가
 
-    # except:
-    #     print('FAILED!')
-    #     body += target['comm_name'] + ' / STATUS : FAILED!' + \
-    #         '\n'  # 실패시에도 본문에 실패했다고 추가
+    except:
+        print('FAILED!')
+        body += target['comm_name'] + ' / STATUS : FAILED!' + \
+            '\n'  # 실패시에도 본문에 실패했다고 추가
 
 email_module.send_email('info clone upload Result ',
                         body)  # 크롤링 하나 끝날 때마다 메일 보내기

@@ -111,7 +111,7 @@ def upload_dict(data):
     print('community upload done')
 
 
-def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name):
+def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, comm_femi_avg):
     st = time.time()
     engine = create_engine(("mysql+mysqldb://%s:%s@%s/%s" % (
         mariadb2_info['username'], mariadb2_info['password'], mariadb2_info['host'], mariadb2_info['database'])), encoding='utf-8')
@@ -191,7 +191,7 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name):
     filltered_df[filltered_df.anti_ratio > 1]
 
     # 페미 빈도 가져오기 ----------------------------------------
-    sql = " where word in ('한남', '페미')  and dates between %(date1)s and %(date2)s"
+    sql = " where word in ('한남', '페미', '여초', '차별', '여성부', '여가부', '성별', '메갈', '맘충',  '김치', '보지')  and dates between %(date1)s and %(date2)s"
 
     conn = engine.connect()
     df = get_word_filtered_data(sql, tablename, conn, start_date, end_date)
@@ -210,9 +210,37 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name):
 
     filltered_df['femi_count'] = new_freq
 
-    filltered_df['femi_ratio'] = filltered_df.femi_count/filltered_df.w_count
+    # 애매한 페미 단어 빈도 가져오기 ----------------------------------------
+    sql = " where word in ('여성, 여자')  and dates between %(date1)s and %(date2)s"
+
+    conn = engine.connect()
+    df = get_word_filtered_data(sql, tablename, conn, start_date, end_date)
+    conn.close()
+
+    dates = list(df.dates.astype('str'))
+    freq = list(df.freq)
+    new_freq = []
+
+    for i in range(len(rawdate)):
+        if rawdate[i] not in dates:
+            new_freq.append(0)
+        else:
+            idx = dates.index(rawdate[i])
+
+            if (freq[idx] > comm_femi_avg):  # 애매한 페미 단어 빈도가 커뮤니티 평균보다 높다면
+                new_freq.append(
+                    (freq[idx] - comm_femi_avg))  # 평균을 빼준 값을 넣어준다
+            else:
+                new_freq.append(0)  # 작다면, 0을 넣어준다
+
+    filltered_df['general_femi_count'] = new_freq
+    filltered_df['femi_count'] = filltered_df.femi_count + \
+        filltered_df.general_femi_count  # 애매한 페미 단어 빈도를 합산한 값(없다면 0을 더해줌)을 더해준다
+    filltered_df['femi_ratio'] = filltered_df.femi_count / \
+        filltered_df.w_count  # 최종적으로 femi_ratio를 구해준다
 
     array_for_community = []
+
     for i in range(len(filltered_df)):
         dict_for_date = {}
         dict_for_date['dates'] = str(filltered_df['dates'][i])
@@ -261,12 +289,12 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name):
 
 # ------함수 실행 -------------------
 target_list = [
-    {'comm_name': 'cook', 'table_name': 'COOK'},
-    {'comm_name': 'ruli', 'table_name': 'RULI'},
-    {'comm_name': 'ilbe', 'table_name': 'ILBE'},
-    {'comm_name': 'clien', 'table_name': 'CLIEN'},
-    {'comm_name': 'mlbpark', 'table_name': 'MLBPARK'},
-    {'comm_name': 'ygosu', 'table_name': 'YGOSU2'}
+    {'comm_name': 'cook', 'table_name': 'COOK', 'comm_femi_avg': 214},
+    {'comm_name': 'ruli', 'table_name': 'RULI', 'comm_femi_avg': 223},
+    {'comm_name': 'ilbe', 'table_name': 'ILBE', 'comm_femi_avg': 27},
+    {'comm_name': 'clien', 'table_name': 'CLIEN', 'comm_femi_avg': 310},
+    {'comm_name': 'mlbpark', 'table_name': 'MLBPARK', 'comm_femi_avg': 50},
+    {'comm_name': 'ygosu', 'table_name': 'YGOSU2', 'comm_femi_avg': 305}
 ]
 
 
@@ -316,7 +344,7 @@ for target in target_list:
         tablename = '%s_%s' % (target['table_name'], yesterday_year_only)
         do_main_job(
             valid_date_array,
-            valid_date_array[0], valid_date_array[-1], tablename, target['comm_name'])
+            valid_date_array[0], valid_date_array[-1], tablename, target['comm_name'], target['comm_femi_avg'])
 
         body += target['comm_name'] + ' / STATUS : SUCCESSFUL / ' + 'Total Time Consumed: ' + \
             str(round(time.time() - start_time, 2)) + \

@@ -125,7 +125,44 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, ob
     rawdate = pd.date_range(start_date, end_date)
     rawdate = list(rawdate.astype('str'))
 
-    # 페미 단어 빈도 가져오기
+    # m_count ===============================================
+    sql = " where word in ('문재인', '문대통령', '문정부', '문프', '문통','문재앙', '문죄인', '문재해', '문재지변', '문근혜', '문구라', '문벌구', '문구라', '문찐따', '문재인조', '쇼통령', '곡재인', '쩝쩝이', '문쩝쩝', '문보궐', '문변태', '문치매', '문치맥', '문등쉰', '문각기동대', '문혼밥', '문틀딱', '문정은', '문북한', '문쪼다', '문저리','문어벙','문오다리','문고구마',  '문틀러', '문주주의', '문벌레',  '문노스',  '미세문지', '재앙이', '문제아', '문세먼지', '재앙 ','젠틀재인','문바마', '문깨끗','파파미','왕수석','negotiator','달님','문프','명왕','재인리','금괴왕') and dates between %(date1)s and %(date2)s"
+
+    conn = engine.connect()
+    df = get_word_filtered_data(sql, tablename, conn, start_date, end_date)
+    conn.close()
+
+    dates = list(df.dates.astype('str'))
+    freq = list(df.freq)
+
+    m_count_freq = []
+
+    for i in range(len(rawdate)):
+        if rawdate[i] not in dates:
+            m_count_freq.append(0)
+        else:
+            idx = dates.index(rawdate[i])
+            m_count_freq.append(freq[idx])
+
+    # anti_count =========================================
+    sql = " where word in ('문재앙', '문죄인', '문재해', '문재지변',  '문근혜', '문구라', '문벌구', '문구라', '문찐따', '문재인조', '쇼통령', '곡재인', '쩝쩝이', '문쩝쩝', '문보궐', '문변태', '문치매', '문치맥', '문등쉰', '문각기동대', '문혼밥', '문틀딱', '문정은', '문북한', '문쪼다', '문저리','문어벙','문오다리','문고구마', '문틀러', '문주주의', '문벌레',  '문노스',  '미세문지', '재앙이', '문제아', '문세먼지',  '재앙')  and dates between %(date1)s and %(date2)s"
+
+    conn = engine.connect()
+    df = get_word_filtered_data(sql, tablename, conn, start_date, end_date)
+    conn.close()
+
+    dates = list(df.dates.astype('str'))
+    freq = list(df.freq)
+    anti_count_freq = []
+
+    for i in range(len(rawdate)):
+        if rawdate[i] not in dates:
+            anti_count_freq.append(0)
+        else:
+            idx = dates.index(rawdate[i])
+            anti_count_freq.append(freq[idx])
+
+    # 페미 단어 빈도 가져오기 ==========================================
     sql = " where word in ('한남', '페미', '여초', '차별', '여성부', '여가부', '성별', '메갈', '맘충',  '김치', '보지')  and dates between %(date1)s and %(date2)s"
 
     conn = engine.connect()
@@ -135,14 +172,14 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, ob
 
     dates = list(filltered_df.dates.astype('str'))
     freq = list(filltered_df.freq)
-    new_freq = []
+    femi_count_freq = []
 
     for i in range(len(rawdate)):
         if rawdate[i] not in dates:
-            new_freq.append(0)
+            femi_count_freq.append(0)
         else:
             idx = dates.index(rawdate[i])
-            new_freq.append(freq[idx])
+            femi_count_freq.append(freq[idx])
 
     # 애매한 페미 빈도 가져오기
     sql = " where word in ('여성, 여자')  and dates between %(date1)s and %(date2)s"
@@ -171,9 +208,28 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, ob
     for i in range(len(valid_date_array)):
         dict_for_date = {}
 
-        dict_for_date['femi_count'] = new_freq[i] + \
+        dict_for_date['femi_count'] = femi_count_freq[i] + \
             general_femi_list[i]  # 애매한 페미 단어 빈도도 더해준다
         dict_for_date['femi_ratio'] = dict_for_date['femi_count'] / w_counts[i]
+
+        # 문 카운트 업데이트
+        dict_for_date['m_count'] = m_count_freq[i]
+
+        # 새로운 문카운트를 가져온 전체 단어로 나눔(지분율 수정)
+        dict_for_date['popularity'] = dict_for_date['m_count'] / w_counts[i]
+
+        # 안티 카운트 수정
+        dict_for_date['anti_count'] = anti_count_freq[i]
+
+        # 수정된 안티카운트와 문카운트를 나눠줘서 적극거부율 수정
+
+        try:
+            dict_for_date['anti_ratio'] = dict_for_date['anti_count'] / \
+                dict_for_date['m_count']
+        except ZeroDivisionError:
+            # 작은 커뮤니티의 경우 m_count가 0일 때가 종종 있음..
+            # 어쩔 수 없이 이럴땐 거부율도 0
+            dict_for_date['anti_ratio'] = 0
 
         array_for_community.append(dict_for_date)
 
@@ -215,7 +271,7 @@ weekago_string = datetime.datetime.strftime(weekago, '%Y-%m-%d')
 yesterday_year_only = datetime.datetime.strftime(yesterday, '%Y')
 
 # date = pd.date_range(weekago_string, yesterday_string)
-date = pd.date_range('2019-01-01', '2019-06-24')
+date = pd.date_range('2019-01-01', '2019-06-29')
 yesterday_year_only = '2019'
 
 date_array = list(date.astype('str'))

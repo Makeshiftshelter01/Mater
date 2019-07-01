@@ -144,7 +144,7 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, co
     filltered_df['w_count'] = new_freq
 
     # 관심도 가져오기  -------------------------------------
-    sql = " where word in ('문재인', '문대통령', '문정부', '문프', '문통','문재앙', '문제인', '문죄인', '문재해', '문재지변', '화재인', '문근혜', '문구라', '문벌구', '문구라', '문찐따', '문재인조', '쇼통령', '곡재인', '쩝쩝이', '문쩝쩝', '문보궐', '문변태', '문치매', '문치맥', '문등쉰', '문각기동대', '문혼밥', '문틀딱', '문정은', '문북한', '문쪼다', '문저리','문어벙','문오다리','문고구마', '먼저인', '문틀러', '문주주의', '문벌레',  '문노스',  '미세문지', '재앙이', '문제아', '문세먼지', '재앙 ','젠틀재인','문바마', '문깨끗','파파미','왕수석','negotiator','달님','문프','명왕','재인리','금괴왕') and dates between %(date1)s and %(date2)s"
+    sql = " where word in '문재인', '문대통령', '문정부', '문프', '문통','문재앙', '문죄인', '문재해', '문재지변', '문근혜', '문구라', '문벌구', '문구라', '문찐따', '문재인조', '쇼통령', '곡재인', '쩝쩝이', '문쩝쩝', '문보궐', '문변태', '문치매', '문치맥', '문등쉰', '문각기동대', '문혼밥', '문틀딱', '문정은', '문북한', '문쪼다', '문저리','문어벙','문오다리','문고구마',  '문틀러', '문주주의', '문벌레',  '문노스',  '미세문지', '재앙이', '문제아', '문세먼지', '재앙 ','젠틀재인','문바마', '문깨끗','파파미','왕수석','negotiator','달님','문프','명왕','재인리','금괴왕') and dates between %(date1)s and %(date2)s"
 
     conn = engine.connect()
     df = get_word_filtered_data(sql, tablename, conn, start_date, end_date)
@@ -167,7 +167,7 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, co
     filltered_df['popularity'] = filltered_df.m_count/filltered_df.w_count
 
     # 안티율 가져오기 -------------------------------------
-    sql = " where word in ('문재앙', '문제인', '문죄인', '문재해', '문재지변', '화재인', '문근혜', '문구라', '문벌구', '문구라', '문찐따', '문재인조', '쇼통령', '곡재인', '쩝쩝이', '문쩝쩝', '문보궐', '문변태', '문치매', '문치맥', '문등쉰', '문각기동대', '문혼밥', '문틀딱', '문정은', '문북한', '문쪼다', '문저리','문어벙','문오다리','문고구마', '먼저인', '문틀러', '문주주의', '문벌레',  '문노스',  '미세문지', '재앙이', '문제아', '문세먼지',  '재앙')  and dates between %(date1)s and %(date2)s"
+    sql = " where word in ('문재앙', '문죄인', '문재해', '문재지변',  '문근혜', '문구라', '문벌구', '문구라', '문찐따', '문재인조', '쇼통령', '곡재인', '쩝쩝이', '문쩝쩝', '문보궐', '문변태', '문치매', '문치맥', '문등쉰', '문각기동대', '문혼밥', '문틀딱', '문정은', '문북한', '문쪼다', '문저리','문어벙','문오다리','문고구마', '문틀러', '문주주의', '문벌레',  '문노스',  '미세문지', '재앙이', '문제아', '문세먼지',  '재앙')  and dates between %(date1)s and %(date2)s"
 
     conn = engine.connect()
     df = get_word_filtered_data(sql, tablename, conn, start_date, end_date)
@@ -209,6 +209,28 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, co
             new_freq.append(freq[idx])
 
     filltered_df['femi_count'] = new_freq
+
+    # 반발지수(문제~~) 가져오기
+    sql = " where word like '문제%%' and dates between %(date1)s and %(date2)s"
+
+    conn = engine.connect()
+    df = get_word_filtered_data(sql, tablename, conn, start_date, end_date)
+    conn.close()
+
+    dates = list(df.dates.astype('str'))
+    freq = list(df.freq)
+    new_freq = []
+
+    for i in range(len(rawdate)):
+        if rawdate[i] not in dates:
+            new_freq.append(0)
+        else:
+            idx = dates.index(rawdate[i])
+            new_freq.append(freq[idx])
+
+    filltered_df['problem_count'] = new_freq
+    filltered_df['problem_ratio'] = filltered_df.problem_count / \
+        filltered_df.w_count
 
     # 애매한 페미 단어 빈도 가져오기 ----------------------------------------
     sql = " where word in ('여성, 여자')  and dates between %(date1)s and %(date2)s"
@@ -256,6 +278,9 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, co
         dict_for_date['femi_count'] = int(filltered_df['femi_count'][i])
         dict_for_date['femi_ratio'] = float(filltered_df['femi_ratio'][i])
         dict_for_date['popularity'] = float(filltered_df['popularity'][i])
+        dict_for_date['problem_count'] = int(filltered_df['problem_count'][i])
+        dict_for_date['problem_ratio'] = float(
+            filltered_df['problem_ratio'][i])
 
         array_for_community.append(dict_for_date)
 

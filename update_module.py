@@ -162,6 +162,24 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, ob
             idx = dates.index(rawdate[i])
             anti_count_freq.append(freq[idx])
 
+# problem_count =========================================
+    sql = " where word like '문제%%' and dates between %(date1)s and %(date2)s"
+
+    conn = engine.connect()
+    df = get_word_filtered_data(sql, tablename, conn, start_date, end_date)
+    conn.close()
+
+    dates = list(df.dates.astype('str'))
+    freq = list(df.freq)
+    problem_count_freq = []
+
+    for i in range(len(rawdate)):
+        if rawdate[i] not in dates:
+            problem_count_freq.append(0)
+        else:
+            idx = dates.index(rawdate[i])
+            problem_count_freq.append(freq[idx])
+
     # 페미 단어 빈도 가져오기 ==========================================
     sql = " where word in ('한남', '페미', '여초', '차별', '여성부', '여가부', '성별', '메갈', '맘충',  '김치', '보지')  and dates between %(date1)s and %(date2)s"
 
@@ -218,6 +236,12 @@ def do_main_job(valid_date_array, start_date, end_date, tablename, comm_name, ob
         # 새로운 문카운트를 가져온 전체 단어로 나눔(지분율 수정)
         dict_for_date['popularity'] = dict_for_date['m_count'] / w_counts[i]
 
+        # 반발 카운트 업데이트
+        dict_for_date['problem_count'] = problem_count_freq[i]
+
+        # 반발 비율 업데이트
+        dict_for_date['problem_ratio'] = dict_for_date['problem_count'] / w_counts[i]
+
         # 안티 카운트 수정
         dict_for_date['anti_count'] = anti_count_freq[i]
 
@@ -271,8 +295,8 @@ weekago_string = datetime.datetime.strftime(weekago, '%Y-%m-%d')
 yesterday_year_only = datetime.datetime.strftime(yesterday, '%Y')
 
 # date = pd.date_range(weekago_string, yesterday_string)
-date = pd.date_range('2019-01-01', '2019-06-29')
-yesterday_year_only = '2019'
+date = pd.date_range('2017-05-01', '2017-12-31')
+yesterday_year_only = '2017'
 
 date_array = list(date.astype('str'))
 
